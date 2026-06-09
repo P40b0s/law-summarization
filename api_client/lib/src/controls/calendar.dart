@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:collection';
-import 'dart:typed_data';
 import 'package:api_client/src/bindings/signals/signals.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -20,12 +20,13 @@ class _CalendarState extends State<Calendar>
   final HashMap<String, int> _unreadyDates = HashMap();
   final DateTime _minDate = DateTime.now().subtract(const Duration(days: 35));
   final int _requestDurationMin = 5;
+  late StreamSubscription _rustSubscription;
   final formatter = DateFormat("yyyy-MM-dd");
   @override
   void initState() 
   {
     super.initState();
-    _listenToStream();
+    _rustSubscription = _listenToStream();
     _startPeriodicTask();
   }
 
@@ -39,29 +40,27 @@ class _CalendarState extends State<Calendar>
     }
   }
 
-void _stopPeriodicTask() 
-{
-  _periodicTaskIsRunning = false; // Safely breaks the loop on the next cycle
-}
-
-  void _listenToStream() 
+  void _stopPeriodicTask() 
   {
-    CalendarResponse.rustSignalStream.listen((signalPack) 
+    _periodicTaskIsRunning = false; // Safely breaks the loop on the next cycle
+  }
+
+  StreamSubscription _listenToStream() 
+  {
+    return CalendarResponse.rustSignalStream.listen((signalPack) 
     {
       if (!mounted) return;
       var dates = signalPack.message.dates;
       updateAll(dates.entries);
     });
   }
+  @override
+  Future<void> dispose() async
+  {
+    await _rustSubscription.cancel();
+    super.dispose();
+  }
 
-  // void update(DateTime date, int processed, int unprocessed)
-  // {
-  //   setState(() 
-  //     {
-  //         _unreadyDates.addAll({formatter.format(date): unprocessed});
-  //         _readyDates.addAll({formatter.format(date): processed});
-  //     });
-  // }
   void updateAll(Iterable<MapEntry<String, DateState>> dates)
   {
     setState(() 
@@ -79,27 +78,39 @@ void _stopPeriodicTask()
   @override
   Widget build(BuildContext context) 
   {
-    return  PagedVerticalCalendar(
-      minDate: _minDate,
-      maxDate: DateTime.now().add(Duration(days: 1)),
-      invisibleMonthsThreshold: 1,
-      startWeekWithSunday: false,
-      onMonthLoaded: (year, month) {
-        // on month widget load 
-      },
-      onDayPressed: (value) {
-        // on day widget pressed   
-      },
-      onPaginationCompleted: (direction) {
-        // on pagination completion
-      },
-      dayBuilder: (context, date) 
-      {
-        final formattedDate = formatter.format(date);
-        final unprocessed = _unreadyDates[formattedDate];
-        final processed = _readyDates[formattedDate];
-        return CalendarDayWidget(date: date, unprocessed: unprocessed, processed: processed, formatter: formatter,);
-      },
+
+    return  Card(
+      margin: const EdgeInsets.all(8.0),
+      elevation: 2,
+        child: PagedVerticalCalendar(
+        minDate: _minDate,
+        maxDate: DateTime.now().add(Duration(days: 1)),
+        invisibleMonthsThreshold: 1,
+        startWeekWithSunday: false,
+        onMonthLoaded: (year, month) {
+          // on month widget load 
+        },
+        onDayPressed: (value) {
+          // on day widget pressed   
+        },
+        onPaginationCompleted: (direction) {
+          // on pagination completion
+        },
+        dayBuilder: (context, date) 
+        {
+          final formattedDate = formatter.format(date);
+          final unprocessed = _unreadyDates[formattedDate];
+          final processed = _readyDates[formattedDate];
+          return RepaintBoundary(
+            child: CalendarDayWidget(
+              date: date,
+              unprocessed: unprocessed,
+              processed: processed,
+              formatter: formatter,
+              ),
+          );
+        },
+      )
     );
   }
 }
@@ -123,28 +134,52 @@ class CalendarDayWidget extends StatelessWidget
   @override
   Widget build(BuildContext context) 
   {
-    // Формируем уникальный ключ на основе данных
     final keyString = '${formatter!.format(date)}_${processed ?? 0}_${unprocessed ?? 0}';
-
-    return Column(
-      key: ValueKey(keyString), // Ключ теперь на уровне полноценного виджета
-      children: [
-        Center(
-          child: Text(
-            date.day.toString(), 
-            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w500, fontSize: 16),
-          ),
-        ),
-        if (processed != null || unprocessed != null)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text((processed ?? 0).toString(), style: const TextStyle(color: Colors.green, fontSize: 12)),
-              const Text("/", style: TextStyle(fontSize: 8)),
-              Text((unprocessed ?? 0).toString(), style: const TextStyle(color: Colors.red, fontSize: 12)),
-            ],
-          )
-      ],
+    return Container(
+      color: getToday(),
+      child: InkWell(
+        onTap: () => DocumentPublicationDateRequest(publicationDate: formatter!.format(date)).sendSignalToRust(),
+      
+        child: Column(
+          key: ValueKey(keyString),
+          children: [
+            Expanded(
+              child: Center(
+                child: Text(
+                  date.day.toString(), 
+                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w500, fontSize: 16),
+                ),
+              ),
+            ),
+            if (processed != null || unprocessed != null)
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text((processed ?? 0).toString(), style: const TextStyle(color: Colors.green, fontSize: 12)),
+                    const Text("/", style: TextStyle(fontSize: 8)),
+                    Text((unprocessed ?? 0).toString(), style: const TextStyle(color: Colors.red, fontSize: 12)),
+                  ],
+                )
+              )
+          ],
+        )
+      )
     );
+  }
+
+  Color getToday()
+  {
+    final dateNow = DateTime.now();
+    final monthNow = dateNow.month;
+    final dayNow = dateNow.day;
+    if (date.day == dayNow && monthNow == date.month)
+    {
+      return Colors.lightGreen;
+    }
+    else
+    {
+      return Colors.transparent;
+    }
   }
 }

@@ -1,4 +1,5 @@
 use tokio::sync::oneshot;
+use utilites::Date;
 
 pub enum DbCommand 
 {
@@ -6,6 +7,7 @@ pub enum DbCommand
     InsertDocument 
     {
         doc_id: String,
+        publication_date: utilites::Date,
         eo_number: String,
         complex_name: String,
         summary: Option<String>,
@@ -14,6 +16,7 @@ pub enum DbCommand
     UpdateDocument 
     {
         doc_id: String,
+        publication_date: utilites::Date,
         eo_number: String,
         complex_name: String,
         summary: Option<String>,
@@ -28,6 +31,11 @@ pub enum DbCommand
     {
         eo_number: String,
         respond: oneshot::Sender<anyhow::Result<Option<super::Document>>>,
+    },
+    GetDocuments
+    {
+        publication_date: Date,
+        respond: oneshot::Sender<anyhow::Result<Vec<super::Document>>>,
     },
     GetAllDocuments 
     {

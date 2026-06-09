@@ -72,6 +72,7 @@ pub async fn run_service(config: Arc<CoreConfiguration>,) -> anyhow::Result<()>
                     db_sender.send(DbCommand::InsertDocument 
                     { 
                         doc_id: card.id.clone(),
+                        publication_date: card.publish_date_short,
                         eo_number: card.eo_number,
                         complex_name: card.complex_name,
                         summary: Some(summarization),

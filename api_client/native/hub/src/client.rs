@@ -6,7 +6,7 @@ use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
 use anyhow::Result;
 use serde::Deserialize;
 
-use crate::{configuration::Configuration, signals::{CalendarRequest, CalendarResponse, PageRequest, PageResponse}};
+use crate::{configuration::Configuration, signals::{CalendarRequest, CalendarResponse, DocumentPublicationDateRequest, DocumentPublicationDateResponse, PageRequest, PageResponse}};
 
 pub struct ApiClient
 {
@@ -56,6 +56,19 @@ impl ApiClient
         .await?;
         Ok(result)
     }
+    pub async fn get_documents_by_publication_date(&self, req: &DocumentPublicationDateRequest) -> Result<DocumentPublicationDateResponse>
+    {
+        let url = [&self.url, "documents/publication_date"].concat();
+        let body = serde_json::to_string(req)?;
+        let result = self.client.post(url)
+        .body(body)
+        .header(CONTENT_TYPE, "application/json")
+        .send()
+        .await?
+        .json()
+        .await?;
+        Ok(result)
+     }
 }
 
 #[derive(Deserialize)]

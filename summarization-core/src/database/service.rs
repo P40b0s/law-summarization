@@ -28,7 +28,7 @@ async fn database_service(mut receiver: mpsc::Receiver<DbCommand>) -> anyhow::Re
     {
         match command 
         {
-            DbCommand::InsertDocument { doc_id, eo_number, complex_name, summary, respond } => 
+            DbCommand::InsertDocument { doc_id, eo_number, publication_date, complex_name, summary, respond } => 
             {
                 // Логика сохранения документа в БД
                 info!("Saving document for EO number: {}", eo_number);
@@ -39,12 +39,13 @@ async fn database_service(mut receiver: mpsc::Receiver<DbCommand>) -> anyhow::Re
                     complex_name,
                     checked_time: None,
                     unloaded: false,
+                    publication_date,
                 };
                 let result = documents.insert(&doc).await
                     .inspect_err(|e| error!("Failed to insert document: {}", e));
                 respond.send(result).unwrap_or_else(|e| error!("Failed to send response for InsertDocument: {:?}", e));
             }
-            DbCommand::UpdateDocument { doc_id, eo_number, summary, respond, complex_name } => 
+            DbCommand::UpdateDocument { doc_id, eo_number, publication_date, summary, respond, complex_name } => 
             {
                 // Логика получения резюме из БД
                 info!("Update document: {}", eo_number);
@@ -55,6 +56,7 @@ async fn database_service(mut receiver: mpsc::Receiver<DbCommand>) -> anyhow::Re
                     complex_name,
                     checked_time: None,
                     unloaded: false,
+                    publication_date,
                 };
 
                 let result = documents.update(&doc).await
@@ -77,6 +79,15 @@ async fn database_service(mut receiver: mpsc::Receiver<DbCommand>) -> anyhow::Re
                     .inspect_err(|e| error!("Failed to send response for GetDocument: {}", e))
                     .and_then(|r| Ok(r.map(|d| d.into())));
                 respond.send(result).unwrap_or_else(|e| error!("Failed to send response for GetDocument: {:?}", e));
+            }
+            DbCommand::GetDocuments { publication_date, respond } =>
+            {
+                // Логика получения документов из БД
+                info!("Get documents for date: {}", publication_date);
+                let result = documents.get_by_publication_date(&publication_date).await
+                    .inspect_err(|e| error!("Failed to send response for GetDocuments: {}", e))
+                    .and_then(|r| Ok(r.into_iter().map(|d| d.into()).collect()));
+                respond.send(result).unwrap_or_else(|e| error!("Failed to send response for GetDocuments: {:?}", e));
             }
             DbCommand::GetAllDocuments { respond } =>
             {

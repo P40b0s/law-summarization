@@ -58,6 +58,30 @@ pub struct DateState
     pub unready: i32
 }
 
+#[derive(Deserialize, Serialize, DartSignal)]
+pub struct DocumentPublicationDateRequest
+{
+    pub publication_date: String,
+}
+#[derive(Serialize, Deserialize, RustSignal)]
+pub struct DocumentPublicationDateResponse
+{
+    pub documents: Vec<Document>,
+    pub selected_date: String,
+}
+
+#[derive(Serialize, Deserialize, SignalPiece)]
+pub struct Document
+{
+    pub eo_number: String,
+    pub publication_date: String,
+    pub doc_id: String,
+    pub summarization_text: Option<String>,
+    pub complex_name: String,
+    pub checked_time: Option<String>,
+    pub unloaded: bool,
+}
+
 #[derive(Serialize, RustSignal)]
 pub struct ErrorSignal
 {

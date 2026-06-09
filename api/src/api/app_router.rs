@@ -3,7 +3,7 @@ use axum::{body::Body, extract::{ConnectInfo, DefaultBodyLimit, Path, State}, ht
 use serde::Serialize;
 use tokio::{fs::create_dir_all, io::AsyncWriteExt};
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
-use crate::{api::{CalendarRequest, CalendarResponse, DateState, PageRequest, PageResponse}, error::AppError, state::AppState};
+use crate::{api::{CalendarRequest, CalendarResponse, DateState, DocumentPublicationDateRequest, DocumentPublicationDateResponse, PageRequest, PageResponse}, error::AppError, state::AppState};
 
 //use crate::{Error, api::{CollectionAddRequest, CollectionUpdateRequest, DocumentRequest, EmbeddingRequest, GenerationRequest, types::QdrantContext}, state::AppState};
 use super::layers::{cors_layer};
@@ -22,6 +22,11 @@ pub fn app_router(app_state: Arc<AppState>) -> Router
 
     .route(&super::with_api_version(super::ApiVersion::V1,"/calendar"), 
          post(get_calendar))
+
+    .route(&super::with_api_version(super::ApiVersion::V1,"/documents/publication_date"), 
+         post(get_documents_by_publication_date))
+
+
     //модели  
     //     .route(&super::with_api_version(super::ApiVersion::V1,"/models/load_generation_model"), 
     //     get(load_generation_model))
@@ -136,8 +141,129 @@ pub async fn get_calendar(
         StatusCode::OK,
         Json(CalendarResponse {dates: result})
     ).into_response())
-
 }
+
+
+pub async fn get_documents_by_publication_date(
+    ConnectInfo(_): ConnectInfo<SocketAddr>,
+    State(app_state): State<Arc<AppState>>,
+    Json(req): Json<DocumentPublicationDateRequest>)
+-> Result<Response<Body>, AppError>
+{
+
+    //FIXME заглушка для теста, заменить на выборку из БД
+    Ok((
+        StatusCode::OK,
+        Json(DocumentPublicationDateResponse { documents: mock_documents(), selected_date: req.publication_date })
+    ).into_response())
+}
+
+
+fn mock_documents() -> Vec<summarization_core::Document>
+{
+    vec![
+        summarization_core::Document
+        {
+            doc_id: "5133ba0c-1d95-42e5-822f-c10c691b467d".to_owned(),
+            eo_number: "0001202605220017".to_owned(),
+            complex_name: "Комплекс 1".to_owned(),
+            publication_date: utilites::Date::parse("2026-05-22").unwrap(),
+            summarization_text: Some("Краткое содержание документа 123".to_owned()),
+            checked_time: None,
+            unloaded: false,
+        },
+        summarization_core::Document
+        {
+            doc_id: "27e492a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
+            eo_number: "0001202606080025".to_owned(),
+            complex_name: "Комплекс 2".to_owned(),
+            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
+            summarization_text: Some("Краткое содержание документа 456".to_owned()),
+            checked_time: None,
+            unloaded: false,
+        },
+        summarization_core::Document
+        {
+            doc_id: "27e592a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
+            eo_number: "0001202606080025".to_owned(),
+            complex_name: "Комплекс 2".to_owned(),
+            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
+            summarization_text: Some("Краткое содержание документа 456".to_owned()),
+            checked_time: None,
+            unloaded: false,
+        },
+        summarization_core::Document
+        {
+            doc_id: "27e692a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
+            eo_number: "0001202606080025".to_owned(),
+            complex_name: "Комплекс 2".to_owned(),
+            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
+            summarization_text: Some("Краткое содержание документа 456".to_owned()),
+            checked_time: None,
+            unloaded: false,
+        },
+        summarization_core::Document
+        {
+            doc_id: "27e792a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
+            eo_number: "0001202606080025".to_owned(),
+            complex_name: "Комплекс 2".to_owned(),
+            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
+            summarization_text: Some("Краткое содержание документа 456".to_owned()),
+            checked_time: None,
+            unloaded: false,
+        },
+        summarization_core::Document
+        {
+            doc_id: "27e892a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
+            eo_number: "0001202606080025".to_owned(),
+            complex_name: "Комплекс 2".to_owned(),
+            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
+            summarization_text: Some("Краткое содержание документа 456".to_owned()),
+            checked_time: None,
+            unloaded: false,
+        },
+        summarization_core::Document
+        {
+            doc_id: "27e992a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
+            eo_number: "0001202606080025".to_owned(),
+            complex_name: "Комплекс 2".to_owned(),
+            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
+            summarization_text: Some("Краткое содержание документа 456".to_owned()),
+            checked_time: None,
+            unloaded: false,
+        },
+        summarization_core::Document
+        {
+            doc_id: "27e402a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
+            eo_number: "0001202606080025".to_owned(),
+            complex_name: "Комплекс 2".to_owned(),
+            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
+            summarization_text: Some("Краткое содержание документа 456".to_owned()),
+            checked_time: None,
+            unloaded: false,
+        },
+        summarization_core::Document
+        {
+            doc_id: "27e412a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
+            eo_number: "0001202606080025".to_owned(),
+            complex_name: "Комплекс 2".to_owned(),
+            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
+            summarization_text: Some("Краткое содержание документа 456".to_owned()),
+            checked_time: None,
+            unloaded: false,
+        },
+        summarization_core::Document
+        {
+            doc_id: "27e422a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
+            eo_number: "0001202606080025".to_owned(),
+            complex_name: "Комплекс 2".to_owned(),
+            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
+            summarization_text: Some("Краткое содержание документа 456".to_owned()),
+            checked_time: None,
+            unloaded: false,
+        },
+    ]
+}  
 
 pub async fn get_page(
     ConnectInfo(_): ConnectInfo<SocketAddr>,

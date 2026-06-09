@@ -10,6 +10,7 @@ use utilites::Date;
 pub struct DocumentsDbo
 {
     pub eo_number: String,
+    pub publication_date: Date,
     pub doc_id: String,
     pub summarization_text: Option<String>,
     pub complex_name: String,
@@ -25,6 +26,8 @@ impl FromRow<'_, SqliteRow> for DocumentsDbo
         let doc_id: String = row.try_get("doc_id")?;
         let summarization_text: Option<String> =  row.try_get("summarization_text")?;
         let complex_name: String = row.try_get("complex_name")?;
+        let publication_date: String = row.try_get("publication_date")?;
+        let publication_date = Date::parse(publication_date).context("Failed to parse publication date").unwrap();
         let checked_time: Option<String> = row.try_get("checked_time")?;
         let checked_time = checked_time.and_then(|ct| Date::parse(ct));
         let unloaded: bool = row.try_get("unloaded")?;
@@ -36,6 +39,7 @@ impl FromRow<'_, SqliteRow> for DocumentsDbo
             complex_name,
             checked_time,
             unloaded,
+            publication_date,
         };
         Ok(obj)
     }
@@ -58,6 +62,7 @@ impl DocumentsTable
         complex_name TEXT NOT NULL,
         checked_time TEXT,
         unloaded BOOLEAN NOT NULL DEFAULT 0,
+        publication_date TEXT NOT NULL,
         PRIMARY KEY(eo_number)
         );
         COMMIT;"
@@ -87,8 +92,8 @@ impl DocumentsTable
     pub async fn insert(&self, doc: &DocumentsDbo) -> Result<()>
     {
         sqlx::query(
-            "INSERT INTO documents (eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded) 
-             VALUES (?, ?, ?, ?, ?, ?)"
+            "INSERT INTO documents (eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded, publication_date) 
+             VALUES (?, ?, ?, ?, ?, ?, ?)"
         )
         .bind(&doc.eo_number)
         .bind(&doc.doc_id)
@@ -96,6 +101,7 @@ impl DocumentsTable
         .bind(&doc.complex_name)
         .bind(doc.checked_time.as_ref().map(|d| d.to_string()))
         .bind(doc.unloaded)
+        .bind(doc.publication_date.format(utilites::DateFormat::SerializeDate))
         .execute(&*self.connection)
         .await
         .context("Failed to insert document")?;
@@ -106,7 +112,7 @@ impl DocumentsTable
     pub async fn get_by_id(&self, eo_number: &str) -> Result<Option<DocumentsDbo>>
     {
         let result = sqlx::query_as::<_, DocumentsDbo>(
-            "SELECT eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded FROM documents WHERE eo_number = ?"
+            "SELECT eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded, publication_date FROM documents WHERE eo_number = ?"
         )
         .bind(eo_number)
         .fetch_optional(&*self.connection)
@@ -115,17 +121,31 @@ impl DocumentsTable
         Ok(result)
     }
 
+    /// Получить документы по дате публикации
+    pub async fn get_by_publication_date(&self, publication_date: &utilites::Date) -> Result<Vec<DocumentsDbo>>
+    {
+        let results = sqlx::query_as::<_, DocumentsDbo>(
+            "SELECT eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded, publication_date FROM documents WHERE publication_date = ?"
+        )
+        .bind(publication_date.format(utilites::DateFormat::SerializeDate))
+        .fetch_all(&*self.connection)
+        .await
+        .context("Failed to fetch documents")?;
+        Ok(results)
+    }
+
     /// Обновить документ
     pub async fn update(&self, doc: &DocumentsDbo) -> Result<()>
     {
         let rows_affected = sqlx::query(
-            "UPDATE documents SET doc_id = ?, summarization_text = ?, complex_name = ?, checked_time = ?, unloaded = ? WHERE eo_number = ?"
+            "UPDATE documents SET doc_id = ?, summarization_text = ?, complex_name = ?, checked_time = ?, unloaded = ?, publication_date = ? WHERE eo_number = ?"
         )
         .bind(&doc.doc_id)
         .bind(&doc.summarization_text)
         .bind(&doc.complex_name)
         .bind(doc.checked_time.as_ref().map(|d| d.to_string()))
         .bind(doc.unloaded)
+        .bind(doc.publication_date.format(utilites::DateFormat::SerializeDate))
         .bind(&doc.eo_number)
         .execute(&*self.connection)
         .await
@@ -158,7 +178,7 @@ impl DocumentsTable
     pub async fn get_all(&self) -> Result<Vec<DocumentsDbo>>
     {
         let results = sqlx::query_as::<_, DocumentsDbo>(
-            "SELECT eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded FROM documents"
+            "SELECT eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded, publication_date FROM documents"
         )
         .fetch_all(&*self.connection)
         .await
@@ -198,7 +218,7 @@ impl DocumentsTable
     /// Получить все документы с `unloaded = true`
     pub async fn get_unloaded(&self) -> Result<Vec<DocumentsDbo>> {
         let results = sqlx::query_as::<_, DocumentsDbo>(
-            "SELECT eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded FROM documents WHERE unloaded = 1"
+            "SELECT eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded, publication_date FROM documents WHERE unloaded = 1"
         )
         .fetch_all(&*self.connection)
         .await

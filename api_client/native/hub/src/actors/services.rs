@@ -6,7 +6,7 @@ use rinf::{DartSignal, RustSignal, RustSignalBinary, debug_print};
 use tokio::task::JoinSet;
 use tracing::error;
 
-use crate::{client::ApiClient, configuration::Configuration, signals::{CalendarRequest, CalendarResponse, ErrorSignal, PageRequest, PageResponse}};
+use crate::{client::ApiClient, configuration::Configuration, signals::{CalendarRequest, CalendarResponse, DocumentPublicationDateRequest, ErrorSignal, PageRequest, PageResponse}};
 /// Actor definition that will hold state in real apps.
 pub struct ServicesActor 
 {
@@ -22,7 +22,8 @@ impl ServicesActor
   {
     let mut owned_tasks = JoinSet::new();
     owned_tasks.spawn(Self::listen_to_pages_request(self_addr.clone()));
-    owned_tasks.spawn(Self::listen_to_calendar_request(self_addr));
+    owned_tasks.spawn(Self::listen_to_calendar_request(self_addr.clone()));
+    owned_tasks.spawn(Self::listen_to_documents_by_date_request(self_addr.clone()));
     Self 
     { 
         client: ApiClient::new(conf),
@@ -43,6 +44,16 @@ impl ServicesActor
   async fn listen_to_calendar_request(mut self_addr: Address<Self>) 
   {
     let receiver = CalendarRequest::get_dart_signal_receiver();
+    while let Some(signal_pack) = receiver.recv().await 
+    {
+      let message = signal_pack.message;
+      let _ = self_addr.notify(message).await;
+    }
+  }
+
+  async fn listen_to_documents_by_date_request(mut self_addr: Address<Self>) 
+  {
+    let receiver = DocumentPublicationDateRequest::get_dart_signal_receiver();
     while let Some(signal_pack) = receiver.recv().await 
     {
       let message = signal_pack.message;
@@ -93,6 +104,27 @@ impl Notifiable<CalendarRequest> for ServicesActor
     {
         let calendar = calendar.unwrap();
         calendar.send_signal_to_dart();   
+    }
+  }
+}
+
+#[async_trait]
+impl Notifiable<DocumentPublicationDateRequest> for ServicesActor 
+{
+  async fn notify(&mut self, msg: DocumentPublicationDateRequest, _: &Context<Self>) 
+  {
+    debug_print!("request documents for publication date {}", msg.publication_date);
+    let documents = self.client.get_documents_by_publication_date(&msg).await;
+    if let Err(e) = documents
+    {
+        error!("{:?}", e);
+        let signal: ErrorSignal = e.into();
+        signal.send_signal_to_dart();
+    }
+    else 
+    {
+        let documents = documents.unwrap();
+        documents.send_signal_to_dart();   
     }
   }
 }

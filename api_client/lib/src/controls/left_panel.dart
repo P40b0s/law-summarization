@@ -1,4 +1,5 @@
 import 'package:api_client/src/controls/calendar.dart';
+import 'package:api_client/src/controls/docs_list.dart';
 import 'package:flutter/material.dart';
 
 class Leftpanel extends StatelessWidget 
@@ -9,7 +10,7 @@ class Leftpanel extends StatelessWidget
   {
     return Column(children: [
       Expanded(child: Calendar()),
-      Expanded(child: Text("Список итемов из календаря"))
+      Expanded(child: DocumentsList()),
     ],);
               
   }
