@@ -85,6 +85,7 @@ class _DocumentsListState extends State<DocumentsList>
                                 _checkedIcon(document),
                                 SizedBox(width: 8,),
                                 _unloadedIcon(document),
+                                FloatingActionButton(onPressed: () => context.appServices.errorProvider.spawnError("Error from ${document.docId}")),
                               ],
                              )
                         ],

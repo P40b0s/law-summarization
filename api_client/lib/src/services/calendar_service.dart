@@ -41,7 +41,7 @@ class CalendarService
     try 
     {
       provider.updateDates(pack.message.dates.entries);
-      errorProvider.close();
+      
     } 
     catch (_) 
     {

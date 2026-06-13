@@ -51,7 +51,6 @@ class DocumentsService
     try 
     {
       provider.setData(pack.message.documents, DateTime.parse(pack.message.selectedDate));
-      errorProvider.close();
     } 
     catch (_) 
     {
