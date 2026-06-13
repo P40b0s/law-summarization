@@ -76,7 +76,8 @@ pub async fn run_service(config: Arc<CoreConfiguration>,) -> anyhow::Result<()>
                         eo_number: card.eo_number,
                         complex_name: card.complex_name,
                         summary: Some(summarization),
-                        respond: db_result_sender 
+                        respond: db_result_sender,
+                        pages_count: card.pages_count as i32
                     }).await?;
                     match db_result_receiver.await?
                     {

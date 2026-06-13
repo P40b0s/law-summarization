@@ -1,52 +1,7 @@
 import 'package:api_client/src/bindings/bindings.dart';
-import 'package:api_client/src/providers/select_document_provider.dart';
+import 'package:api_client/src/services.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
-// class Editor extends StatelessWidget 
-// {
-//   final Document? _document;
-//   const Editor({super.key, this._document});
-  
-
-//   @override
-//   Widget build(BuildContext context) 
-//   {
-//     if (_document != null)
-//     {
-//       return Column(children: [
-//         Expanded(child: Text(_document.eoNumber)),
-//         const SizedBox(
-//           width: 250,
-//           child: TextField(
-            
-//             obscureText: false,
-//             decoration: InputDecoration(
-//               border: OutlineInputBorder(),
-//               labelText: 'Суммаризация',
-//             ),
-//           ),
-//         ),
-//         Divider(
-//         color: Colors.grey,     // Color of the line
-//         thickness: 2,           // Thickness of the line
-//         indent: 20,              // Empty space to the leading edge
-//         endIndent: 20,           // Empty space to the trailing edge
-//         height: 40,             // The divider's total height (spacing)
-//       ),
-//         Expanded(child: Text(_document.publicationDate)),
-//       ],);
-//     }
-//     else
-//     {
-//       return const SizedBox.shrink();
-//     }
-    
-              
-//   }
-// }
-
-
 
 // Виджет для редактирования Document
 class DocumentWidget extends StatefulWidget 
@@ -61,7 +16,7 @@ class DocumentWidget extends StatefulWidget
   @override
   State<DocumentWidget> createState() => _DocumentWidgetState();
 }
-
+///Виджет обновляется из родительского виджета в main при изменении выбранного документа.
 class _DocumentWidgetState extends State<DocumentWidget> 
 {
   late TextEditingController _summaryController;
@@ -99,7 +54,8 @@ class _DocumentWidgetState extends State<DocumentWidget>
   }
 
   @override
-  void dispose() {
+  void dispose() 
+  {
     _summaryController.dispose();
     // _summarizationText.removeListener(_notifyDocumentChanged);
     // _checkedTime.removeListener(_notifyDocumentChanged);
@@ -111,20 +67,15 @@ class _DocumentWidgetState extends State<DocumentWidget>
     super.dispose();
   }
 
-  void _notifyDocumentChanged() 
+  void _notifyDocumentChanged(BuildContext context) 
   {
       final updatedDocument = widget.document.copyWith(
       summarizationText: () => _summarizationText.value,
       checkedTime: () =>  _checkedTime.value,
       unloaded: _unloaded.value,
     );
-    //FIXME как то это запутано немного...
-    Provider.of<SaveDocumentProvider>(context, listen: false).updateData(updatedDocument);
-    // if (widget.onDocumentChanged != null) {
-    //   // Создаем копию документа с новыми значениями
-   
-    //   widget.onDocumentChanged!(updatedDocument);
-    // }
+    //Сообщаем провайдеру о том, что документ изменился, чтобы он мог обновить свое состояние и при необходимости уведомить других слушателей
+    context.appServices.documentsService.saveDocument(updatedDocument);
   }
 
   String _publicationDate() 
@@ -223,7 +174,7 @@ class _DocumentWidgetState extends State<DocumentWidget>
                     backgroundColor: Colors.lightGreen,
                     foregroundColor: Colors.black
                     ),
-                  onPressed: _notifyDocumentChanged,
+                  onPressed: () => _notifyDocumentChanged(context),
                   child: Text('Сохранить'),
                 ),
               ],

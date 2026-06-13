@@ -17,6 +17,7 @@ pub struct Document
     pub publication_date: utilites::Date,
     pub checked_time: Option<utilites::Date>,
     pub unloaded: bool,
+    pub pages_count: i32,
 }
 impl From<DocumentsDbo> for Document
 {
@@ -31,6 +32,7 @@ impl From<DocumentsDbo> for Document
             publication_date: dbo.publication_date,
             checked_time: dbo.checked_time,
             unloaded: dbo.unloaded,
+            pages_count: dbo.pages_count,
         }
     }
 }

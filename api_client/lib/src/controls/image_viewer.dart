@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:api_client/src/bindings/signals/signals.dart';
@@ -22,23 +23,23 @@ class _ImageViewerState extends State<ImageViewer>
   late String _docId;
   late bool _isPageLoading = true;
   late Uint8List? _currentImage;
-  Key _imageKey = const ValueKey<int>(1);
+  Key _imageKey = const ValueKey<String>("1");
+  late StreamSubscription _rustSubscription;
   @override
   void initState() 
   {
     super.initState();
     _currentPage = widget.initialPage;
-    
     _maxPage = widget.maxPage;
     _docId = widget.docId;
-    _listenToStream();
+    _rustSubscription = _listenToStream();
     _requestPage(1);
    
   }
 
-  void _listenToStream() 
+  StreamSubscription _listenToStream() 
   {
-    PageResponse.rustSignalStream.listen((signalPack) 
+    return PageResponse.rustSignalStream.listen((signalPack) 
     {
       if (!mounted) return;
       int pageNum = signalPack.message.pageNumber;
@@ -46,9 +47,16 @@ class _ImageViewerState extends State<ImageViewer>
       {
         _currentImage = signalPack.binary;
         _isPageLoading = false;
-        _imageKey = ValueKey<int>(pageNum);
+        _imageKey = ValueKey<String>(_docId + pageNum.toString());
       });
     });
+  }
+
+  @override
+  Future<void> dispose() async
+  {
+    await _rustSubscription.cancel();
+    super.dispose();
   }
 
   void _requestPage(int pageNumber)
@@ -56,7 +64,7 @@ class _ImageViewerState extends State<ImageViewer>
     setState(() 
     {
       _isPageLoading = true;
-      _imageKey = ValueKey<int>(pageNumber);
+      _imageKey = ValueKey<String>(_docId + pageNumber.toString());
     });
     // Future.delayed(const Duration(milliseconds: 1500), () {
     //   PageRequest(id: _docId, pageNumber: pageNumber).sendSignalToRust();
@@ -231,6 +239,8 @@ class _ImageViewerState extends State<ImageViewer>
 
   void _goToPage() 
   {
+
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -241,6 +251,7 @@ class _ImageViewerState extends State<ImageViewer>
             labelText: 'Номер страницы (1-$_maxPage)',
             border: OutlineInputBorder(),
           ),
+          
           onSubmitted: (value) {
             final int? page = int.tryParse(value);
             if (page != null && page >= 1 && page <= _maxPage) 

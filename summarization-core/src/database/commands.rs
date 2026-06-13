@@ -11,6 +11,7 @@ pub enum DbCommand
         eo_number: String,
         complex_name: String,
         summary: Option<String>,
+        pages_count: i32,
         respond: oneshot::Sender<anyhow::Result<()>>,
     },
     UpdateDocument 
@@ -20,6 +21,7 @@ pub enum DbCommand
         eo_number: String,
         complex_name: String,
         summary: Option<String>,
+        pages_count: i32,
         respond: oneshot::Sender<anyhow::Result<()>>,
     },
     DeleteDocument 

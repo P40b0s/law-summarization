@@ -131,11 +131,11 @@ pub async fn get_calendar(
 
     let date_from = req.from;
     let mut result = HashMap::new();
-    result.insert(date_from.format(utilites::DateFormat::SerializeDate), DateState { ready: 20, unready: 5});
+    result.insert(date_from.format(utilites::DateFormat::SerializeDate), DateState { checked: 20, unloaded: 5, count: 13});
     let date_from_plus_1 = date_from.add_minutes(1440);
-    result.insert(date_from_plus_1.format(utilites::DateFormat::SerializeDate), DateState { ready: 80, unready: 24});
+    result.insert(date_from_plus_1.format(utilites::DateFormat::SerializeDate), DateState { checked: 80, unloaded: 24, count: 10});
     let date_from_plus_2 = date_from_plus_1.add_minutes(1440);
-    result.insert(date_from_plus_2.format(utilites::DateFormat::SerializeDate), DateState { ready: 8, unready: 4});
+    result.insert(date_from_plus_2.format(utilites::DateFormat::SerializeDate), DateState { checked: 8, unloaded: 4, count: 12});
 
     Ok((
         StatusCode::OK,
@@ -166,102 +166,107 @@ fn mock_documents() -> Vec<summarization_core::Document>
         {
             doc_id: "5133ba0c-1d95-42e5-822f-c10c691b467d".to_owned(),
             eo_number: "0001202605220017".to_owned(),
-            complex_name: "Комплекс 1".to_owned(),
+            complex_name: "О внесении изменений в Указ Президента Российской Федерации от 27 апреля 2007 г. № 556 \"О реструктуризации атомного энергопромышленного комплекса Российской Федерации" .to_owned(),
             publication_date: utilites::Date::parse("2026-05-22").unwrap(),
             summarization_text: Some("Краткое содержание документа 123".to_owned()),
             checked_time: None,
             unloaded: false,
+            pages_count: 2,
         },
         summarization_core::Document
         {
             doc_id: "27e492a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
             eo_number: "0001202606080025".to_owned(),
-            complex_name: "Комплекс 2".to_owned(),
+            complex_name: "О мерах по реализации подпункта 7.1.89 пункта 7 решения Комиссии Таможенного союза от 27 ноября 2009 г. № 130 \"О едином таможенно-тарифном регулировании Евразийского экономического союза\" в отношении какао-пасты необезжиренной, какао-масла и какао-жира\"".to_owned(),
             publication_date: utilites::Date::parse("2026-06-08").unwrap(),
             summarization_text: Some("Краткое содержание документа 456".to_owned()),
             checked_time: None,
             unloaded: false,
+            pages_count: 17
         },
         summarization_core::Document
         {
-            doc_id: "27e592a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
-            eo_number: "0001202606080025".to_owned(),
-            complex_name: "Комплекс 2".to_owned(),
-            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
+            doc_id: "7bde4ed1-0c05-4d86-b098-3f2ab6723bea".to_owned(),
+            eo_number: "0001202606120019".to_owned(),
+            complex_name: "О награждении государственными наградами Российской Федерации".to_owned(),
+            publication_date: utilites::Date::parse("2026-06-12").unwrap(),
             summarization_text: Some("Краткое содержание документа 456".to_owned()),
             checked_time: None,
             unloaded: false,
+            pages_count: 24
         },
-        summarization_core::Document
-        {
-            doc_id: "27e692a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
-            eo_number: "0001202606080025".to_owned(),
-            complex_name: "Комплекс 2".to_owned(),
-            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
-            summarization_text: Some("Краткое содержание документа 456".to_owned()),
-            checked_time: None,
-            unloaded: false,
-        },
-        summarization_core::Document
-        {
-            doc_id: "27e792a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
-            eo_number: "0001202606080025".to_owned(),
-            complex_name: "Комплекс 2".to_owned(),
-            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
-            summarization_text: Some("Краткое содержание документа 456".to_owned()),
-            checked_time: None,
-            unloaded: false,
-        },
-        summarization_core::Document
-        {
-            doc_id: "27e892a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
-            eo_number: "0001202606080025".to_owned(),
-            complex_name: "Комплекс 2".to_owned(),
-            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
-            summarization_text: Some("Краткое содержание документа 456".to_owned()),
-            checked_time: None,
-            unloaded: false,
-        },
-        summarization_core::Document
-        {
-            doc_id: "27e992a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
-            eo_number: "0001202606080025".to_owned(),
-            complex_name: "Комплекс 2".to_owned(),
-            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
-            summarization_text: Some("Краткое содержание документа 456".to_owned()),
-            checked_time: None,
-            unloaded: false,
-        },
-        summarization_core::Document
-        {
-            doc_id: "27e402a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
-            eo_number: "0001202606080025".to_owned(),
-            complex_name: "Комплекс 2".to_owned(),
-            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
-            summarization_text: Some("Краткое содержание документа 456".to_owned()),
-            checked_time: None,
-            unloaded: false,
-        },
-        summarization_core::Document
-        {
-            doc_id: "27e412a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
-            eo_number: "0001202606080025".to_owned(),
-            complex_name: "Комплекс 2".to_owned(),
-            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
-            summarization_text: Some("Краткое содержание документа 456".to_owned()),
-            checked_time: None,
-            unloaded: false,
-        },
-        summarization_core::Document
-        {
-            doc_id: "27e422a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
-            eo_number: "0001202606080025".to_owned(),
-            complex_name: "Комплекс 2".to_owned(),
-            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
-            summarization_text: Some("Краткое содержание документа 456".to_owned()),
-            checked_time: None,
-            unloaded: false,
-        },
+        // summarization_core::Document
+        // {
+        //     doc_id: "27e692a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
+        //     eo_number: "0001202606080025".to_owned(),
+        //     complex_name: "Постановление Правительства Российской Федерации от 12.06.2026 № 737
+        //     \"О централизации закупок отдельных видов медицинских изделий для обеспечения государственных нужд в целях реализации мероприятий (результатов) федерального проекта \"Борьба с сахарным диабетом\", входящего в состав национального проекта \"Продолжительная и активная жизнь\"".to_owned(),
+        //     publication_date: utilites::Date::parse("2026-06-08").unwrap(),
+        //     summarization_text: Some("Краткое содержание документа 456".to_owned()),
+        //     checked_time: None,
+        //     unloaded: false,
+        //     pages_count: 17
+        // },
+        // summarization_core::Document
+        // {
+        //     doc_id: "27e792a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
+        //     eo_number: "0001202606080025".to_owned(),
+        //     complex_name: "Комплекс 2".to_owned(),
+        //     publication_date: utilites::Date::parse("2026-06-08").unwrap(),
+        //     summarization_text: Some("Краткое содержание документа 456".to_owned()),
+        //     checked_time: None,
+        //     unloaded: false,
+        // },
+        // summarization_core::Document
+        // {
+        //     doc_id: "27e892a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
+        //     eo_number: "0001202606080025".to_owned(),
+        //     complex_name: "Комплекс 2".to_owned(),
+        //     publication_date: utilites::Date::parse("2026-06-08").unwrap(),
+        //     summarization_text: Some("Краткое содержание документа 456".to_owned()),
+        //     checked_time: None,
+        //     unloaded: false,
+        // },
+        // summarization_core::Document
+        // {
+        //     doc_id: "27e992a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
+        //     eo_number: "0001202606080025".to_owned(),
+        //     complex_name: "Комплекс 2".to_owned(),
+        //     publication_date: utilites::Date::parse("2026-06-08").unwrap(),
+        //     summarization_text: Some("Краткое содержание документа 456".to_owned()),
+        //     checked_time: None,
+        //     unloaded: false,
+        // },
+        // summarization_core::Document
+        // {
+        //     doc_id: "27e402a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
+        //     eo_number: "0001202606080025".to_owned(),
+        //     complex_name: "Комплекс 2".to_owned(),
+        //     publication_date: utilites::Date::parse("2026-06-08").unwrap(),
+        //     summarization_text: Some("Краткое содержание документа 456".to_owned()),
+        //     checked_time: None,
+        //     unloaded: false,
+        // },
+        // summarization_core::Document
+        // {
+        //     doc_id: "27e412a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
+        //     eo_number: "0001202606080025".to_owned(),
+        //     complex_name: "Комплекс 2".to_owned(),
+        //     publication_date: utilites::Date::parse("2026-06-08").unwrap(),
+        //     summarization_text: Some("Краткое содержание документа 456".to_owned()),
+        //     checked_time: None,
+        //     unloaded: false,
+        // },
+        // summarization_core::Document
+        // {
+        //     doc_id: "27e422a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
+        //     eo_number: "0001202606080025".to_owned(),
+        //     complex_name: "Комплекс 2".to_owned(),
+        //     publication_date: utilites::Date::parse("2026-06-08").unwrap(),
+        //     summarization_text: Some("Краткое содержание документа 456".to_owned()),
+        //     checked_time: None,
+        //     unloaded: false,
+        // },
     ]
 }  
 

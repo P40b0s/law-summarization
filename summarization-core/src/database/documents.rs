@@ -16,6 +16,7 @@ pub struct DocumentsDbo
     pub complex_name: String,
     pub checked_time: Option<Date>,
     pub unloaded: bool,
+    pub pages_count: i32,
 }
 
 impl FromRow<'_, SqliteRow> for DocumentsDbo 
@@ -31,6 +32,7 @@ impl FromRow<'_, SqliteRow> for DocumentsDbo
         let checked_time: Option<String> = row.try_get("checked_time")?;
         let checked_time = checked_time.and_then(|ct| Date::parse(ct));
         let unloaded: bool = row.try_get("unloaded")?;
+        let pages_count: i32 = row.try_get("pages_count")?;
         let obj = DocumentsDbo
         {
             eo_number,
@@ -40,6 +42,7 @@ impl FromRow<'_, SqliteRow> for DocumentsDbo
             checked_time,
             unloaded,
             publication_date,
+            pages_count,
         };
         Ok(obj)
     }
@@ -63,6 +66,7 @@ impl DocumentsTable
         checked_time TEXT,
         unloaded BOOLEAN NOT NULL DEFAULT 0,
         publication_date TEXT NOT NULL,
+        pages_count INTEGER NOT NULL DEFAULT 0,
         PRIMARY KEY(eo_number)
         );
         COMMIT;"
@@ -92,8 +96,8 @@ impl DocumentsTable
     pub async fn insert(&self, doc: &DocumentsDbo) -> Result<()>
     {
         sqlx::query(
-            "INSERT INTO documents (eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded, publication_date) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO documents (eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded, publication_date, pages_count) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
         )
         .bind(&doc.eo_number)
         .bind(&doc.doc_id)
@@ -102,6 +106,7 @@ impl DocumentsTable
         .bind(doc.checked_time.as_ref().map(|d| d.to_string()))
         .bind(doc.unloaded)
         .bind(doc.publication_date.format(utilites::DateFormat::SerializeDate))
+        .bind(doc.pages_count)
         .execute(&*self.connection)
         .await
         .context("Failed to insert document")?;
@@ -112,7 +117,7 @@ impl DocumentsTable
     pub async fn get_by_id(&self, eo_number: &str) -> Result<Option<DocumentsDbo>>
     {
         let result = sqlx::query_as::<_, DocumentsDbo>(
-            "SELECT eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded, publication_date FROM documents WHERE eo_number = ?"
+            "SELECT eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded, publication_date, pages_count FROM documents WHERE eo_number = ?"
         )
         .bind(eo_number)
         .fetch_optional(&*self.connection)
@@ -125,7 +130,7 @@ impl DocumentsTable
     pub async fn get_by_publication_date(&self, publication_date: &utilites::Date) -> Result<Vec<DocumentsDbo>>
     {
         let results = sqlx::query_as::<_, DocumentsDbo>(
-            "SELECT eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded, publication_date FROM documents WHERE publication_date = ?"
+            "SELECT eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded, publication_date, pages_count FROM documents WHERE publication_date = ?"
         )
         .bind(publication_date.format(utilites::DateFormat::SerializeDate))
         .fetch_all(&*self.connection)
@@ -178,7 +183,7 @@ impl DocumentsTable
     pub async fn get_all(&self) -> Result<Vec<DocumentsDbo>>
     {
         let results = sqlx::query_as::<_, DocumentsDbo>(
-            "SELECT eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded, publication_date FROM documents"
+            "SELECT eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded, publication_date, pages_count FROM documents"
         )
         .fetch_all(&*self.connection)
         .await
@@ -218,7 +223,7 @@ impl DocumentsTable
     /// Получить все документы с `unloaded = true`
     pub async fn get_unloaded(&self) -> Result<Vec<DocumentsDbo>> {
         let results = sqlx::query_as::<_, DocumentsDbo>(
-            "SELECT eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded, publication_date FROM documents WHERE unloaded = 1"
+            "SELECT eo_number, doc_id, summarization_text, complex_name, checked_time, unloaded, publication_date, pages_count FROM documents WHERE unloaded = 1"
         )
         .fetch_all(&*self.connection)
         .await

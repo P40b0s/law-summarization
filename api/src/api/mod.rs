@@ -39,8 +39,9 @@ pub struct CalendarResponse
 #[derive(Serialize)]
 pub struct DateState
 {
-    ready: i32,
-    unready: i32
+    checked: i32,
+    unloaded: i32,
+    count: i32
 }
 
 #[derive(Deserialize)]

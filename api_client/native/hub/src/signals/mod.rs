@@ -54,8 +54,9 @@ pub struct CalendarResponse
 #[derive(Serialize, Deserialize, SignalPiece)]
 pub struct DateState
 {
-    pub ready: i32,
-    pub unready: i32
+    pub checked: i32,
+    pub unloaded: i32,
+    pub count: i32
 }
 
 #[derive(Deserialize, Serialize, DartSignal)]
@@ -80,6 +81,7 @@ pub struct Document
     pub complex_name: String,
     pub checked_time: Option<String>,
     pub unloaded: bool,
+    pub pages_count: i32
 }
 
 #[derive(Serialize, RustSignal)]

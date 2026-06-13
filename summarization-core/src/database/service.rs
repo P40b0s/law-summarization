@@ -28,7 +28,7 @@ async fn database_service(mut receiver: mpsc::Receiver<DbCommand>) -> anyhow::Re
     {
         match command 
         {
-            DbCommand::InsertDocument { doc_id, eo_number, publication_date, complex_name, summary, respond } => 
+            DbCommand::InsertDocument { doc_id, eo_number, pages_count, publication_date, complex_name, summary, respond } => 
             {
                 // Логика сохранения документа в БД
                 info!("Saving document for EO number: {}", eo_number);
@@ -40,12 +40,13 @@ async fn database_service(mut receiver: mpsc::Receiver<DbCommand>) -> anyhow::Re
                     checked_time: None,
                     unloaded: false,
                     publication_date,
+                    pages_count,
                 };
                 let result = documents.insert(&doc).await
                     .inspect_err(|e| error!("Failed to insert document: {}", e));
                 respond.send(result).unwrap_or_else(|e| error!("Failed to send response for InsertDocument: {:?}", e));
             }
-            DbCommand::UpdateDocument { doc_id, eo_number, publication_date, summary, respond, complex_name } => 
+            DbCommand::UpdateDocument { doc_id, eo_number, publication_date, summary, respond, complex_name, pages_count } => 
             {
                 // Логика получения резюме из БД
                 info!("Update document: {}", eo_number);
@@ -57,6 +58,7 @@ async fn database_service(mut receiver: mpsc::Receiver<DbCommand>) -> anyhow::Re
                     checked_time: None,
                     unloaded: false,
                     publication_date,
+                    pages_count,
                 };
 
                 let result = documents.update(&doc).await

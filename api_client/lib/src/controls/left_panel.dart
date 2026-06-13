@@ -8,7 +8,8 @@ class Leftpanel extends StatelessWidget
   @override
   Widget build(BuildContext context) 
   {
-    return Column(children: [
+    return Column(children: 
+    [
       Expanded(child: Calendar()),
       Expanded(child: DocumentsList()),
     ],);
