@@ -5,7 +5,7 @@ use tracing::{error, info};
 use super::commands::DbCommand;
 use super::documents::{DocumentsTable, DocumentsDbo};
 
-pub async fn start_database_service(receiver: mpsc::Receiver<DbCommand>)
+pub fn start_database_service(receiver: mpsc::Receiver<DbCommand>)
 {
     tokio::spawn(async move 
     {
@@ -15,7 +15,7 @@ pub async fn start_database_service(receiver: mpsc::Receiver<DbCommand>)
             Err(e) => 
             {
                 error!("Database service crashed: {}", e);
-                //panic!("Database service crashed: {}", e);
+                panic!("Database service crashed: {}", e);
             }
         }
     });

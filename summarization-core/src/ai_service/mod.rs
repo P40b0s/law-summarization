@@ -6,6 +6,8 @@ use reqwest::Client;
 
 use crate::configuration::CoreConfiguration;
 
+
+
 /// Контент с текстом
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TextContent {

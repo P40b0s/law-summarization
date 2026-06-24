@@ -11,16 +11,11 @@ import 'package:rinf/rinf.dart';
 import 'src/bindings/bindings.dart';
 import 'package:flutter/material.dart';
 
-Future<void> main() async {
+Future<void> main() async 
+{
   AppServices.init();
   await initializeRust(assignRustSignal);
-  createActors();
- 
   runApp(const MyApp());
-}
-
-void createActors() {
-  //CreateActors().sendSignalToRust();
 }
 
 class MyApp extends StatelessWidget 
@@ -32,7 +27,7 @@ class MyApp extends StatelessWidget
   {
     return MultiProvider(providers: [
       ChangeNotifierProvider.value(
-            value: context.appServices.errorProvider)
+            value: context.appServices.errorService.provider)
     ],
     child:  MaterialApp(
       builder: (context, child) => ToastOverlay(child: child!),
@@ -54,12 +49,6 @@ class MyApp extends StatelessWidget
         ],),
         
         body: Padding(padding: EdgeInsets.all(30),
-        
-        // child: MultiProvider(
-        //   providers: [
-        //     ChangeNotifierProvider<SelectDocumentProvider>(create: (_) => SelectDocumentProvider()),
-        //     ChangeNotifierProvider<SaveDocumentProvider>(create: (_) => SaveDocumentProvider())
-        //   ],
           child: Row(
             textDirection: TextDirection.ltr,
             children: [

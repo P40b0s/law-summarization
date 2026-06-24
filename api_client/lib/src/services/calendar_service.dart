@@ -3,21 +3,19 @@ import 'package:api_client/src/bindings/signals/signals.dart';
 import 'package:api_client/src/events/documents_events.dart';
 import 'package:api_client/src/providers/calendar_provider.dart';
 import 'package:api_client/src/providers/error_provider.dart';
+import 'package:api_client/src/services/error_service.dart';
 import 'package:rinf/rinf.dart';
 
 class CalendarService 
 {
-  final ErrorProvider errorProvider = ErrorProvider();
+  final ErrorService errorService;
   final CalendarProvider provider = CalendarProvider();
   late final StreamSubscription _sub;
   bool _periodicTaskIsRunning = true;
   
-  CalendarService() 
+  CalendarService({required this.errorService}) 
   {
-    _sub = CalendarResponse.rustSignalStream.listen((pack) => _onResponse(pack), onError: (error) 
-    {
-      errorProvider.spawnError('Ошибка ответа');
-    });
+    _sub = CalendarResponse.rustSignalStream.listen((pack) => _onResponse(pack));
     _startPeriodicTask();
   }
 
@@ -38,24 +36,13 @@ class CalendarService
   
   void _onResponse(RustSignalPack<CalendarResponse> pack) 
   {
-    try 
-    {
-      provider.updateDates(pack.message.dates.entries);
-      
-    } 
-    catch (_) 
-    {
-      errorProvider.spawnError('Ошибка ответа');
-    } 
-    finally 
-    {
-    }
+    provider.updateDates(pack.message.dates.entries);
   }
   
   Future<void> dispose() async 
   {
     await _sub.cancel();
     provider.dispose();
-    errorProvider.dispose();
+    errorService.dispose();
   }
 }

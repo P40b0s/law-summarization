@@ -7,7 +7,7 @@ use axum::{extract::Path, http::StatusCode, response::IntoResponse, routing::{ge
 use publication_client::{ExtendedPublicationDocumentCard, PublicationApiClient, ReqwestPublicationApiClient};
 use serde::{Deserialize, Serialize};
 use sqlx::{sqlite::SqlitePoolOptions, FromRow, SqlitePool};
-use summarization_core::{DbCommand, PublicationService};
+use summarization_core::{DbCommand, PublicationService, SummarizationService};
 use std::{net::SocketAddr, sync::Arc};
 use tokio::sync::{mpsc, oneshot};
 use tracing::{debug, error, info};
@@ -29,22 +29,25 @@ async fn main() -> anyhow::Result<()>
     let config = ArcSwap::new(Arc::new(conf));
     //TODO разобраться потом с динамическим изменением конфигурации
     let core_config = Arc::new(config.load().core_configuration.clone());
-    let publication_service = PublicationService::<ReqwestPublicationApiClient>::create_reqwest_service(core_config.clone());
-    let publication_service = Arc::new(publication_service);
-    let (db_tx, db_rx) = tokio::sync::mpsc::channel(16);
-    tokio::spawn(summarization_core::start_database_service( db_rx));
-    let ai_service = Arc::new(summarization_core::AiService::new("qwen3.5".to_owned(), core_config.clone()));
+    //let publication_service = PublicationService::<ReqwestPublicationApiClient>::create_reqwest_service(core_config.clone());
+    //let publication_service = Arc::new(publication_service);
+    //let (db_tx, db_rx) = tokio::sync::mpsc::channel(16);
+    //tokio::spawn(summarization_core::start_database_service( db_rx));
+    //let ai_service = Arc::new(summarization_core::AiService::new("qwen3.5".to_owned(), core_config.clone()));
+    //let local_db = db_tx.clone();
     // tokio::spawn(
     // async move {
-    //         summarization_core::run_service(core_config)
+    //         summarization_core::run_service(core_config, db_tx)
     //             .await.inspect_err(|e| error!("Error {:?}", e))
     // });
+    let summarization_service = Arc::new(SummarizationService::new(core_config, "qwen3.6"));
+    let background_service = Arc::clone(&summarization_service);
+    tokio::spawn(async move  { background_service.start_service().await } );
     let app_state = AppState {
         configuration: config.load().clone(),
-        publication_service: publication_service,
-        ai_service: ai_service,
-        db_tx,
+        summarization_service: summarization_service,
     };
+
 
     // let app = Router::new()
     //     .route("/", get(root_handler))

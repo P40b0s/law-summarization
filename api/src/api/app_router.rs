@@ -14,8 +14,8 @@ use super::layers::{cors_layer};
 pub fn app_router(app_state: Arc<AppState>) -> Router
 {   
     Router::new()    
-     .route(&super::with_api_version(super::ApiVersion::V1,"/documents"), 
-         get(get_db_documents))
+    //  .route(&super::with_api_version(super::ApiVersion::V1,"/documents"), 
+    //      get(get_db_documents))
 
      .route(&super::with_api_version(super::ApiVersion::V1,"/pages"), 
          post(get_page))
@@ -85,40 +85,40 @@ pub fn app_router(app_state: Arc<AppState>) -> Router
 }
 
 
-pub async fn get_db_documents(
-    ConnectInfo(_): ConnectInfo<SocketAddr>,
-    State(app_state): State<Arc<AppState>>,)
--> Result<Response<Body>, AppError>
-{
-    let response = tokio::sync::oneshot::channel();
-    let _ = app_state.db_tx.send(summarization_core::DbCommand::GetAllDocuments { respond: response.0 }).await
-        .map_err(|e| AppError::InternalError(format!("Failed to send command to database service: {}", e)))?;
-    match response.1.await    
-    {
-        Ok(result) =>
-        {
-            match result
-            {
-                Ok(docs) =>
-                {
-                    Ok((
-                            StatusCode::OK,
-                            Json(docs)
-                        ).into_response())
-                }
-                Err(e) =>
-                {
-                    return Err(AppError::InternalError(format!("Failed to get documents from database service: {}", e)));
-                }
-             }
-        }
-        Err(e) =>
-        {
-            return Err(AppError::InternalError(format!("Failed to receive response from database service: {}", e)));
-        }
+// pub async fn get_db_documents(
+//     ConnectInfo(_): ConnectInfo<SocketAddr>,
+//     State(app_state): State<Arc<AppState>>,)
+// -> Result<Response<Body>, AppError>
+// {
+//     let response = tokio::sync::oneshot::channel();
+//     let _ = app_state.db_tx.send(summarization_core::DbCommand::GetAllDocuments { respond: response.0 }).await
+//         .map_err(|e| AppError::InternalError(format!("Failed to send command to database service: {}", e)))?;
+//     match response.1.await    
+//     {
+//         Ok(result) =>
+//         {
+//             match result
+//             {
+//                 Ok(docs) =>
+//                 {
+//                     Ok((
+//                             StatusCode::OK,
+//                             Json(docs)
+//                         ).into_response())
+//                 }
+//                 Err(e) =>
+//                 {
+//                     return Err(AppError::InternalError(format!("Failed to get documents from database service: {}", e)));
+//                 }
+//              }
+//         }
+//         Err(e) =>
+//         {
+//             return Err(AppError::InternalError(format!("Failed to receive response from database service: {}", e)));
+//         }
      
-    }
-}
+//     }
+// }
 
 pub async fn get_calendar(
     ConnectInfo(_): ConnectInfo<SocketAddr>,
@@ -276,7 +276,7 @@ pub async fn get_page(
     Json(req): Json<PageRequest>)
 -> Result<Response<Body>, AppError>
 {
-    let page = app_state.publication_service.get_png(&req.id, req.page_number as u32).await?;
+    let page = app_state.summarization_service.publication_service.get_png(&req.id, req.page_number as u32).await?;
     let page = PageResponse
     {
         page: page.to_vec(),

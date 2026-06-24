@@ -14,6 +14,8 @@ pub struct CoreConfiguration
     pub document_signatories: Vec<String>,
     #[serde(default = "check_period_min")]
     pub check_period_min: usize,
+    #[serde(default = "retro_days_period")]
+    pub retro_days_period: usize,
 }
 
 pub fn document_types() -> Vec<String>
@@ -52,6 +54,10 @@ pub fn check_period_min() -> usize
 {
     5
 }
+pub fn retro_days_period() -> usize
+{
+    5
+}
 pub fn ai_service_url() -> String
 {
     "http://10.0.0.2:8080".to_string()
@@ -68,6 +74,7 @@ impl Default for CoreConfiguration
             document_types: document_types(),
             document_signatories: document_signatories(),
             check_period_min: check_period_min(),
+            retro_days_period: retro_days_period()
         }
     }
 }

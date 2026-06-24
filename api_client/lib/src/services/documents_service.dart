@@ -2,22 +2,22 @@ import 'dart:async';
 import 'package:api_client/src/bindings/signals/signals.dart';
 import 'package:api_client/src/events/documents_events.dart';
 import 'package:api_client/src/providers/documents_provider.dart';
-import 'package:api_client/src/providers/error_provider.dart';
+import 'package:api_client/src/services/error_service.dart';
 import 'package:intl/intl.dart';
 import 'package:rinf/rinf.dart';
 
 class DocumentsService 
 {
   final DocumentsListProvider provider = DocumentsListProvider();
-  final ErrorProvider errorProvider = ErrorProvider();
+  final ErrorService errorService;
   final DocumentEvents _events = DocumentEvents();
   late final StreamSubscription _sub;
   
-  DocumentsService() 
+  DocumentsService({required this.errorService}) 
   {
     _sub = DocumentPublicationDateResponse.rustSignalStream.listen((pack) => _onResponse(pack), onError: (error) 
     {
-      errorProvider.spawnError('Ошибка ответа');
+      //errorService.spawnError('Ошибка ответа');
       provider.setLoading(false);
     });
   }
@@ -48,17 +48,14 @@ class DocumentsService
   
   void _onResponse(RustSignalPack<DocumentPublicationDateResponse> pack) 
   {
-    try 
+    var date = DateTime.tryParse(pack.message.selectedDate);
+    if (date == null)
     {
-      provider.setData(pack.message.documents, DateTime.parse(pack.message.selectedDate));
-    } 
-    catch (_) 
+      errorService.spawnError('Ошибка формата даты: ${pack.message.selectedDate}');
+    }
+    else
     {
-       errorProvider.spawnError('Ошибка ответа');
-    } 
-    finally 
-    {
-      provider.setLoading(false);
+      provider.setData(pack.message.documents, date);
     }
   }
   
@@ -66,6 +63,5 @@ class DocumentsService
   {
     await _sub.cancel();
     provider.dispose();
-    errorProvider.dispose();
   }
 }

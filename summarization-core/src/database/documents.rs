@@ -113,6 +113,19 @@ impl DocumentsTable
         Ok(())
     }
 
+    pub async fn get_calendar_info()
+    {
+//         SELECT 
+//     publication_date,
+//     COUNT(*) AS total_count,
+//     SUM(CASE WHEN checked_time IS NOT NULL THEN 1 ELSE 0 END) AS checked_count,
+//     SUM(CASE WHEN unloaded = 1 THEN 1 ELSE 0 END) AS unloaded_count
+// FROM documents
+// WHERE publication_date BETWEEN '2026-06-19' AND '2026-06-24'
+// GROUP BY publication_date
+// ORDER BY publication_date;
+    }
+
     /// Получить документ по eo_number
     pub async fn get_by_id(&self, eo_number: &str) -> Result<Option<DocumentsDbo>>
     {

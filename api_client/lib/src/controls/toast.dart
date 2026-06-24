@@ -1,3 +1,4 @@
+import 'package:api_client/src/bindings/bindings.dart';
 import 'package:api_client/src/providers/error_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

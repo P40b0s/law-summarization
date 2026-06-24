@@ -1,7 +1,8 @@
+import 'package:api_client/src/bindings/bindings.dart';
 import 'package:flutter/foundation.dart';
 
 /// Severity level for a toast / error entry.
-enum ErrorSeverity { info, warning, error, success }
+//enum ErrorSeverity { info, warning, error, success }
 
 /// A single notification entry stored in [ErrorProvider] history.
 class ErrorEntry {

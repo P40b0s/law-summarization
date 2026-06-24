@@ -88,6 +88,16 @@ pub struct Document
 pub struct ErrorSignal
 {
     pub error: String,
+    pub severity: ErrorSeverity
+}
+
+#[derive(Serialize, Deserialize, SignalPiece)]
+pub enum ErrorSeverity
+{
+    Error,
+    Warning,
+    Info,
+    Success
 }
 
 impl Into<ErrorSignal> for anyhow::Error
@@ -96,7 +106,8 @@ impl Into<ErrorSignal> for anyhow::Error
     {
         ErrorSignal 
         {
-            error: self.to_string()
+            error: self.to_string(),
+            severity: ErrorSeverity::Error
         }
     }
 }
