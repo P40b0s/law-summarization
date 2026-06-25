@@ -46,23 +46,11 @@ async fn database_service(mut receiver: mpsc::Receiver<DbCommand>) -> anyhow::Re
                     .inspect_err(|e| error!("Failed to insert document: {}", e));
                 respond.send(result).unwrap_or_else(|e| error!("Failed to send response for InsertDocument: {:?}", e));
             }
-            DbCommand::UpdateDocument { doc_id, eo_number, publication_date, summary, respond, complex_name, pages_count } => 
+            DbCommand::UpdateDocument { doc_id, summary, checked_time, unloaded, respond } => 
             {
-                // Логика получения резюме из БД
-                info!("Update document: {}", eo_number);
-                let doc = DocumentsDbo {
-                    doc_id,
-                    eo_number: eo_number,
-                    summarization_text: summary.clone(),
-                    complex_name,
-                    checked_time: None,
-                    unloaded: false,
-                    publication_date,
-                    pages_count,
-                };
-
-                let result = documents.update(&doc).await
-                    .inspect_err(|e| error!("Failed to update document: {}", e));
+                info!("Partialy update document: {}", doc_id);
+                let result = documents.partialy_update(&doc_id, summary.as_ref(), checked_time.as_ref(), unloaded).await
+                    .inspect_err(|e| error!("Failed to partialy update document: {}", e));
                 respond.send(result).unwrap_or_else(|e| error!("Failed to send response for UpdateDocument: {:?}", e));
             }
             DbCommand::DeleteDocument { eo_number, respond } =>
@@ -118,7 +106,14 @@ async fn database_service(mut receiver: mpsc::Receiver<DbCommand>) -> anyhow::Re
                 let result = documents.set_checked_time(&eo_number, checked_time).await
                     .inspect_err(|e| error!("Failed to set checked_time: {}", e));
                 respond.send(result).unwrap_or_else(|e| error!("Failed to send response for SetDocumentCheckedTime: {:?}", e));
-            },
+            }
+            DbCommand::GetCalendarState { date_from, date_to, respond } => 
+            {
+                info!("Check calendar state from {} to {}", date_from.to_string(), date_to.to_string());
+                let result = documents.get_calendar_info(date_from, date_to).await
+                    .inspect_err(|e| error!("Failed to get calendar state: {}", e));
+                respond.send(result).unwrap_or_else(|e| error!("Failed to send response for GetCalendarState: {:?}", e));
+            }
         }
     }
     Err(anyhow!("Database service stopped unexpectedly"))

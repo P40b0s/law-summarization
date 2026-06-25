@@ -31,6 +31,7 @@ tracing-subscriber="0.3.23"
 figment = {version = "0.10.19", features=["env", "toml"]}
 anyhow = "*"
 utilites = { git = "https://github.com/P40b0s/help_utilites.git", package = "utilites", features = ["dates"]}
+shared ={ path = "../../../shared"}
 
 # Uncomment below to target the web.
 # tokio_with_wasm = { version = "0.8.5", features = ["rt", "macros", "time"] }

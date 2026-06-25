@@ -1,0 +1,9 @@
+[package]
+name = "shared"
+version = "0.1.0"
+edition = "2024"
+resolver = "3"
+
+[dependencies]
+serde.workspace = true
+utilites.workspace = true

@@ -1,6 +1,8 @@
 use tokio::sync::oneshot;
 use utilites::Date;
 
+use crate::database::documents;
+
 pub enum DbCommand 
 {
     // Document commands
@@ -17,11 +19,9 @@ pub enum DbCommand
     UpdateDocument 
     {
         doc_id: String,
-        publication_date: utilites::Date,
-        eo_number: String,
-        complex_name: String,
         summary: Option<String>,
-        pages_count: i32,
+        unloaded: bool,
+        checked_time: Option<Date>,
         respond: oneshot::Sender<anyhow::Result<()>>,
     },
     DeleteDocument 
@@ -58,5 +58,11 @@ pub enum DbCommand
         eo_number: String,
         checked_time: Option<utilites::Date>,
         respond: oneshot::Sender<anyhow::Result<()>>,
+    },
+    GetCalendarState 
+    {
+        date_from: Date,
+        date_to: Date,
+        respond: oneshot::Sender<anyhow::Result<Vec<documents::DocumentStatsRow>>>,
     },
 }

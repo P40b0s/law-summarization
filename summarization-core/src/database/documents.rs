@@ -19,6 +19,15 @@ pub struct DocumentsDbo
     pub pages_count: i32,
 }
 
+#[derive(FromRow, Debug)]
+pub struct DocumentStatsRow 
+{
+    pub publication_date: String,
+    pub total_count: i64,
+    pub checked_count: i64,
+    pub unloaded_count: i64,
+}
+
 impl FromRow<'_, SqliteRow> for DocumentsDbo 
 {
     fn from_row(row: &SqliteRow) -> sqlx::Result<Self> 
@@ -113,17 +122,26 @@ impl DocumentsTable
         Ok(())
     }
 
-    pub async fn get_calendar_info()
+    pub async fn get_calendar_info(&self, from: Date, to: Date) -> Result<Vec<DocumentStatsRow>>
     {
-//         SELECT 
-//     publication_date,
-//     COUNT(*) AS total_count,
-//     SUM(CASE WHEN checked_time IS NOT NULL THEN 1 ELSE 0 END) AS checked_count,
-//     SUM(CASE WHEN unloaded = 1 THEN 1 ELSE 0 END) AS unloaded_count
-// FROM documents
-// WHERE publication_date BETWEEN '2026-06-19' AND '2026-06-24'
-// GROUP BY publication_date
-// ORDER BY publication_date;
+        let rows: Vec<DocumentStatsRow> = sqlx::query_as::<_, DocumentStatsRow>(
+        r#"
+            SELECT 
+                publication_date,
+                COUNT(*) AS total_count,
+                SUM(CASE WHEN checked_time IS NOT NULL THEN 1 ELSE 0 END) AS checked_count,
+                SUM(CASE WHEN unloaded = 1 THEN 1 ELSE 0 END) AS unloaded_count
+            FROM documents
+            WHERE publication_date BETWEEN ? AND ?
+            GROUP BY publication_date
+            ORDER BY publication_date
+        "#)
+        .bind(from.format(utilites::DateFormat::SerializeDate))
+        .bind(to.format(utilites::DateFormat::SerializeDate))
+        .fetch_all(&*self.connection)
+         .await
+        .context("Failed to get calendar info")?;
+        Ok(rows)
     }
 
     /// Получить документ по eo_number
@@ -172,6 +190,26 @@ impl DocumentsTable
 
         if rows_affected == 0 {
             warn!("No document found with eo_number: {}", doc.eo_number);
+        }
+        Ok(())
+    }
+    pub async fn partialy_update(&self, doc_id: &str, summarization_text: Option<&String>, checked_time: Option<&Date>, unloaded: bool) -> Result<()>
+    {
+        let rows_affected = sqlx::query(
+            "UPDATE documents SET summarization_text = ?, checked_time = ?, unloaded = ? WHERE doc_id = ?"
+        )
+        .bind(summarization_text)
+        .bind(checked_time.map(|d| d.to_string()))
+        .bind(unloaded)
+        .bind(doc_id)
+        .execute(&*self.connection)
+        .await
+        .inspect_err(|e|error!("{e}"))
+        .context("Failed to partialy update document")?
+        .rows_affected();
+
+        if rows_affected == 0 {
+            warn!("No document found with id: {}", doc_id);
         }
         Ok(())
     }

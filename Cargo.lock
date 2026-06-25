@@ -93,6 +93,7 @@ dependencies = [
  "publication-client",
  "serde",
  "serde_json",
+ "shared",
  "sqlx",
  "summarization-core",
  "thiserror",
@@ -1355,6 +1356,7 @@ dependencies = [
  "rinf",
  "serde",
  "serde_json",
+ "shared",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -3025,6 +3027,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "shared"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "utilites",
+]
+
+[[package]]
 name = "shlex"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3335,6 +3345,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "shared",
  "sqlx",
  "tokio",
  "tracing",

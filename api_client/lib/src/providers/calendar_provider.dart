@@ -9,6 +9,7 @@ class CalendarProvider extends ChangeNotifier
 {
 
   final HashMap<String, int> _checkedDates = HashMap();
+  final HashMap<String, bool> _selected = HashMap();
   final HashMap<String, int> _unloadedDates = HashMap();
   final HashMap<String, int> _countDates = HashMap();
   final DateTime _minDate = DateTime.now().subtract(const Duration(days: 35));
@@ -18,10 +19,17 @@ class CalendarProvider extends ChangeNotifier
   int? checked(DateTime date) =>  _checkedDates[formatter.format(date)];
   int? unloaded(DateTime date) =>  _unloadedDates[formatter.format(date)];
   int? count(DateTime date) =>  _countDates[formatter.format(date)];
+  bool? selected(DateTime date) =>  _selected[formatter.format(date)];
   String keyString(DateTime date) => '${formatter.format(date)}_${checked(date)}_${unloaded(date)}_${count(date)}';
   int get requestDurationMin => _requestDurationMin;
   CalendarProvider();
 
+  void selectDate(DateTime date)
+  {
+    _selected.updateAll(((key, value) => false));
+    _selected[formatter.format(date)] = true;
+    notifyListeners();
+  }
   void updateDates(Iterable<MapEntry<String, DateState>> dates)
   {
     for (var date in dates)

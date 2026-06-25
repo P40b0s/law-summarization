@@ -17,72 +17,17 @@ class Calendar extends StatefulWidget
 
 class _CalendarState extends State<Calendar> 
 {
-  //bool _periodicTaskIsRunning = true;
-  //final HashMap<String, int> _readyDates = HashMap();
-  //final HashMap<String, int> _unreadyDates = HashMap();
-  //final DateTime _minDate = DateTime.now().subtract(const Duration(days: 35));
-  //final int _requestDurationMin = 5;
-  //late StreamSubscription _rustSubscription;
-  //final formatter = DateFormat("yyyy-MM-dd");
   final d = initializeDateFormatting('ru_RU', null);
 
   @override
   void initState() 
   {
     super.initState();
-    //_rustSubscription = _listenToStream();
-    //_startPeriodicTask();
   }
-
- 
-  // Future<void> _startPeriodicTask() async 
-  // {
-  //   while (_periodicTaskIsRunning) 
-  //   {
-  //     CalendarRequest(from: formatter.format(_minDate)).sendSignalToRust();
-  //     await Future.delayed(Duration(minutes: _requestDurationMin));
-  //   }
-  // }
-
-  // void _stopPeriodicTask() 
-  // {
-  //   _periodicTaskIsRunning = false; // Safely breaks the loop on the next cycle
-  // }
-
-  // StreamSubscription _listenToStream() 
-  // {
-  //   return CalendarResponse.rustSignalStream.listen((signalPack) 
-  //   {
-  //     if (!mounted) return;
-  //     var dates = signalPack.message.dates;
-  //     updateAll(dates.entries);
-  //   });
-  // }
-  // @override
-  // Future<void> dispose() async
-  // {
-  //   await _rustSubscription.cancel();
-  //   super.dispose();
-  // }
-
-  // void updateAll(Iterable<MapEntry<String, DateState>> dates)
-  // {
-  //   setState(() 
-  //     {
-  //       for (var date in dates)
-  //       {
-  //         var ready = date.value.ready;
-  //         var unready = date.value.unready;
-  //         _unreadyDates[date.key] = unready;
-  //         _readyDates[date.key] = ready;
-  //       }
-  //     });
-  // }
 
   @override
   Widget build(BuildContext context) 
   {
-
     return  Card(
       margin: const EdgeInsets.all(8.0),
       elevation: 2,
@@ -118,17 +63,18 @@ class _CalendarState extends State<Calendar>
         {
           return RepaintBoundary(
             child:ListenableBuilder(
-      listenable: context.appServices.documentsService.provider,
-      builder: (_, _)
-      {
-        return CalendarDayWidget(
-              date: date,
-              count: context.appServices.calendarService.provider.count(date),
-              checked: context.appServices.calendarService.provider.checked(date),
-              unloaded: context.appServices.calendarService.provider.unloaded(date),
-              );
-      })
-           
+              //listenable: context.appServices.documentsService.provider,
+              listenable: context.appServices.calendarService.provider,
+              builder: (_, _)
+              {
+                return CalendarDayWidget(
+                      date: date,
+                      count: context.appServices.calendarService.provider.count(date),
+                      checked: context.appServices.calendarService.provider.checked(date),
+                      unloaded: context.appServices.calendarService.provider.unloaded(date),
+                      selected: context.appServices.calendarService.provider.selected(date) ?? false,
+                      onDateSelected: context.appServices.calendarService.provider.selectDate);
+              })
           );
         },
       )
@@ -143,6 +89,8 @@ class CalendarDayWidget extends StatelessWidget
   final int? checked;
   final int? unloaded;
   final int? count;
+  final bool selected;
+  final Function(DateTime) onDateSelected;
 
   const CalendarDayWidget({
     super.key, 
@@ -150,7 +98,10 @@ class CalendarDayWidget extends StatelessWidget
     required this.count,
     required this.checked, 
     required this.unloaded,
+    required this.selected,
+    required this.onDateSelected
   });
+
 
   @override
   Widget build(BuildContext context) 
@@ -159,7 +110,11 @@ class CalendarDayWidget extends StatelessWidget
     return Container(
       color: getToday(),
       child: InkWell(
-        onTap: () => context.appServices.documentsService.getDocumentsForDate(date),
+        onTap: () => 
+        {
+          context.appServices.documentsService.getDocumentsForDate(date),
+          onDateSelected(date)
+        },
         child: Column(
           key: ValueKey(keyString),
           children: [
@@ -198,7 +153,11 @@ class CalendarDayWidget extends StatelessWidget
     final dateNow = DateTime.now();
     final monthNow = dateNow.month;
     final dayNow = dateNow.day;
-    if (date.day == dayNow && monthNow == date.month)
+    if (selected)
+    {
+      return const Color.fromARGB(92, 45, 198, 236);
+    }
+    else if (date.day == dayNow && monthNow == date.month)
     {
       return Colors.lightGreen;
     }

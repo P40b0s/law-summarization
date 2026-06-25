@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:api_client/src/bindings/signals/signals.dart';
-import 'package:api_client/src/events/documents_events.dart';
 import 'package:api_client/src/providers/calendar_provider.dart';
-import 'package:api_client/src/providers/error_provider.dart';
 import 'package:api_client/src/services/error_service.dart';
 import 'package:rinf/rinf.dart';
 

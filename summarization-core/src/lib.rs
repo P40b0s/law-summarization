@@ -6,11 +6,12 @@ mod configuration;
 mod ai_service;
 mod scheduler;
 
-use std::{sync::Arc, time::Duration};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use anyhow::anyhow;
 use chrono::Days;
-pub use database::{DbCommand, Document, start_database_service};
+pub use database::{DbCommand, start_database_service};
+pub use shared::Document;
 pub use configuration::CoreConfiguration;
 use tokio::sync::oneshot;
 use publication_client::{PublicationDocumentCard, ReqwestPublicationApiClient};
@@ -29,6 +30,7 @@ pub struct SummarizationService
     databse_service: tokio::sync::mpsc::Sender<DbCommand>,
     ai_service: AiService,
     configuration: Arc<CoreConfiguration>
+
 }
 
 impl SummarizationService
@@ -93,6 +95,7 @@ impl SummarizationService
         };
         Ok(())
     }
+
     async fn get_documents_for_date(&self, date: Date) -> anyhow::Result<Vec<PublicationDocumentCard>>
     {
         let result = self.publication_service.search_documents(&date).await?;
@@ -167,6 +170,70 @@ impl SummarizationService
             {
                 error!("Failed to save document {} to DB: {}", card.id, e);
                 Err( anyhow!("Ошибка `{}` при добавлении документа {} в базу данных!", e, card.id))
+            }
+        }
+    }
+    pub async fn get_calendar_state(&self, date_from: Date, date_to: Date) -> anyhow::Result<shared::CalendarResponse>
+    {
+        let (db_result_sender, db_result_receiver) = oneshot::channel();
+        self.databse_service.send(DbCommand::GetCalendarState { date_from, date_to, respond: db_result_sender }).await?;
+        match db_result_receiver.await?
+        {
+            Ok(result) => 
+            {
+                let result: HashMap<String, shared::DateState> = result.into_iter().map(|s| 
+                    (s.publication_date, 
+                        shared::DateState 
+                        { 
+                            checked: s.checked_count as i32,
+                            unloaded: s.unloaded_count as i32,
+                            count: s.total_count as i32
+                        }
+                    )
+                ).collect();
+               Ok(shared::CalendarResponse { dates: result })
+            },
+            Err(e) => 
+            {
+                error!("Ошибка `{}` при получении статуса календаря", e);
+                Err( anyhow!("Ошибка `{}` при получении статуса календаря", e))
+            }
+        }
+    }
+    pub async fn get_documents_by_publication_date(&self, date: Date) -> anyhow::Result<Vec<shared::Document>>
+    {
+        let (db_result_sender, db_result_receiver) = oneshot::channel();
+        self.databse_service.send(DbCommand::GetDocuments { publication_date: date, respond: db_result_sender }).await?;
+        match db_result_receiver.await?
+        {
+            Ok(result) => 
+            {
+               
+               Ok(result)
+            },
+            Err(e) => 
+            {
+                error!("Ошибка `{}` при получении списка документов", e);
+                Err( anyhow!("Ошибка `{}` при получении списка документов", e))
+            }
+        }
+    }
+
+    pub async fn update_document(&self, doc: Document) -> anyhow::Result<shared::CalendarResponse>
+    {
+        let (db_result_sender, db_result_receiver) = oneshot::channel();
+        self.databse_service.send(DbCommand::UpdateDocument { doc_id: doc.doc_id.clone(), summary: doc.summarization_text, checked_time: doc.checked_time, unloaded: doc.unloaded, respond: db_result_sender }).await?;
+        match db_result_receiver.await?
+        {
+            Ok(_) => 
+            {
+               let result = self.get_calendar_state(doc.publication_date.clone(), doc.publication_date.clone()).await;
+               result
+            },
+            Err(e) => 
+            {
+                error!("Ошибка `{}` при обновлении документа {}", e, doc.doc_id);
+                Err( anyhow!("Ошибка `{}` при обновлении документа {}", e, doc.doc_id))
             }
         }
     }

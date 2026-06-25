@@ -157,7 +157,7 @@ class _DocumentWidgetState extends State<DocumentWidget>
                 hintText: 'Введите краткое содержание...',
                 border: OutlineInputBorder(),
               ),
-              maxLines: 5,
+              maxLines: 15,
               onChanged: (c) 
               {
                 //Future.delayed(Duration(milliseconds: 500), () =>  _summarizationText.value = c);

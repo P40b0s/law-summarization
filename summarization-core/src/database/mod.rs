@@ -2,23 +2,25 @@ mod connection;
 mod documents;
 mod commands;
 mod service;
+use std::collections::HashMap;
+
 pub use commands::DbCommand;
 use documents::DocumentsDbo;
-use serde::{Deserialize, Serialize};
 pub use service::start_database_service;
+use shared::Document;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Document
-{
-    pub doc_id: String,
-    pub eo_number: String,
-    pub complex_name: String,
-    pub summarization_text: Option<String>,
-    pub publication_date: utilites::Date,
-    pub checked_time: Option<utilites::Date>,
-    pub unloaded: bool,
-    pub pages_count: i32,
-}
+// #[derive(Debug, Serialize, Deserialize)]
+// pub struct Document
+// {
+//     pub doc_id: String,
+//     pub eo_number: String,
+//     pub complex_name: String,
+//     pub summarization_text: Option<String>,
+//     pub publication_date: utilites::Date,
+//     pub checked_time: Option<utilites::Date>,
+//     pub unloaded: bool,
+//     pub pages_count: i32,
+// }
 impl From<DocumentsDbo> for Document
 {
     fn from(dbo: DocumentsDbo) -> Self 
@@ -36,6 +38,7 @@ impl From<DocumentsDbo> for Document
         }
     }
 }
+
 
 
 

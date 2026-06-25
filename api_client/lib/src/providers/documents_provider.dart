@@ -1,8 +1,5 @@
-
 import 'dart:collection';
-
 import 'package:api_client/src/bindings/signals/signals.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class DocumentsListProvider extends ChangeNotifier

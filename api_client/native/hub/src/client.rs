@@ -1,13 +1,18 @@
 use std::sync::Arc;
 
-use reqwest::{Url, header::CONTENT_TYPE};
+use reqwest::{Response, Url, header::CONTENT_TYPE};
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
 use anyhow::Result;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use shared::{CalendarRequest, CalendarResponse, DocumentPublicationDateRequest, DocumentPublicationDateResponse, PageRequest};
 
-use crate::{configuration::Configuration, signals::{CalendarRequest, CalendarResponse, DocumentPublicationDateRequest, DocumentPublicationDateResponse, PageRequest, PageResponse}};
-
+use crate::{configuration::Configuration};
+#[derive(Deserialize, Debug, Clone)]
+pub struct ServerErrorResponse
+{
+    err: String
+}
 pub struct ApiClient
 {
     client: ClientWithMiddleware,
@@ -29,45 +34,66 @@ impl ApiClient
             client: client,
         }
     }
-    pub async fn get_page(&self, req: &PageRequest) -> Result<ApiPageResponse>
+    pub async fn get_page(&self, req: &PageRequest) -> Result<shared::PageResponse>
     {
         let url = [&self.url, "pages"].concat();
         let body = serde_json::to_string(req)?;
-        let result = self.client.post(url)
+        let response = self.client.post(url)
         .body(body)
         .header(CONTENT_TYPE, "application/json")
         .send()
-        .await?
-        .json()
         .await?;
-        Ok(result)
+        Self::check_response(response).await
     }
 
     pub async fn get_calendar(&self, req: &CalendarRequest) -> Result<CalendarResponse>
     {
         let url = [&self.url, "calendar"].concat();
         let body = serde_json::to_string(req)?;
-        let result = self.client.post(url)
+        let response = self.client.post(url)
         .body(body)
         .header(CONTENT_TYPE, "application/json")
         .send()
-        .await?
-        .json()
         .await?;
-        Ok(result)
+        Self::check_response(response).await
+    }
+
+    pub async fn update_document(&self, req: &shared::UpdateDocumentRequest) -> Result<CalendarResponse>
+    {
+        let url = [&self.url, "documents/update"].concat();
+        let body = serde_json::to_string(req)?;
+        let response = self.client.post(url)
+        .body(body)
+        .header(CONTENT_TYPE, "application/json")
+        .send()
+        .await?;
+        Self::check_response(response).await
+        
+    }
+
+    async fn check_response<T: DeserializeOwned>(response: Response) -> Result<T>
+    {
+        if response.status().is_success()
+        {
+            Ok(response.json().await?)
+        }
+        else
+        {
+            let error_response: ServerErrorResponse = response.json().await?;
+            Err(anyhow::anyhow!("{}", error_response.err))
+        }
     }
     pub async fn get_documents_by_publication_date(&self, req: &DocumentPublicationDateRequest) -> Result<DocumentPublicationDateResponse>
     {
         let url = [&self.url, "documents/publication_date"].concat();
         let body = serde_json::to_string(req)?;
-        let result = self.client.post(url)
+        let response = self.client.post(url)
         .body(body)
         .header(CONTENT_TYPE, "application/json")
         .send()
-        .await?
-        .json()
         .await?;
-        Ok(result)
+        Self::check_response(response).await
+        
      }
 }
 

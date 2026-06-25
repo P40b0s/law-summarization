@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = ["api", "summarization-core", "api_client/native/*"]
+members = ["api", "summarization-core", "api_client/native/*", "shared"]
 default-members = ["api"]
 [workspace.dependencies]
 axum = "0.8.9"

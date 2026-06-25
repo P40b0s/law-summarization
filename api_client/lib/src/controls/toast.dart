@@ -156,7 +156,7 @@ class _ToastOverlayState extends State<ToastOverlay> {
                       child: Align(
                         alignment: Alignment.topCenter,
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 420),
+                          constraints: const BoxConstraints(maxWidth: 1020),
                           child: _ToastCard(
                             instance: t,
                             onDismissed: () => _removeToast(t.entry.id),
@@ -389,7 +389,7 @@ class RecentErrorsPanel extends StatelessWidget {
       initialChildSize: 0.6,
       minChildSize: 0.3,
       maxChildSize: 0.95,
-      expand: false,
+      expand: true,
       builder: (context, scrollController) {
         return Container(
           decoration: BoxDecoration(
@@ -416,9 +416,9 @@ class RecentErrorsPanel extends StatelessWidget {
                     child: Row(
                       children: [
                         Icon(Icons.history, color: scheme.primary, size: 22),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 100),
                         Text(
-                          'Recent errors',
+                          'Ошибки',
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(width: 8),
@@ -446,7 +446,7 @@ class RecentErrorsPanel extends StatelessWidget {
                           TextButton.icon(
                             onPressed: provider.clearHistory,
                             icon: const Icon(Icons.delete_sweep, size: 18),
-                            label: const Text('Clear'),
+                            label: const Text('Очистить'),
                           ),
                       ],
                     ),
@@ -500,12 +500,12 @@ class _EmptyHistory extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No errors so far',
+            'Нет ошибок',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 4),
           Text(
-            "You're all clear",
+            "Ошибки очищены",
             style:
                 TextStyle(color: scheme.onSurface.withOpacity(0.6)),
           ),
@@ -521,10 +521,10 @@ class _ErrorTile extends StatelessWidget {
 
   String _formatTime(DateTime t) {
     final d = DateTime.now().difference(t);
-    if (d.inSeconds < 60) return '${d.inSeconds}s ago';
-    if (d.inMinutes < 60) return '${d.inMinutes}m ago';
-    if (d.inHours < 24) return '${d.inHours}h ago';
-    return '${d.inDays}d ago';
+    if (d.inSeconds < 60) return '${d.inSeconds}с назад';
+    if (d.inMinutes < 60) return '${d.inMinutes}м назад';
+    if (d.inHours < 24) return '${d.inHours}ч назад';
+    return '${d.inDays}д назад';
   }
 
   @override
@@ -540,16 +540,15 @@ class _ErrorTile extends StatelessWidget {
       ),
       title: Text(
         entry.title ?? entry.message,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+        maxLines: 4,
         style: const TextStyle(fontWeight: FontWeight.w600),
       ),
       subtitle: entry.title == null
           ? null
           : Text(
               entry.message,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+              maxLines: 4,
+              overflow: TextOverflow.visible,
             ),
       trailing: Text(
         _formatTime(entry.timestamp),

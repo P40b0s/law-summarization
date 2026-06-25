@@ -1,9 +1,11 @@
 use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 use axum::{body::Body, extract::{ConnectInfo, DefaultBodyLimit, Path, State}, http::{header, HeaderValue, StatusCode}, response::{IntoResponse, Response}, routing::{get, post}, Extension, Json, Router};
 use serde::Serialize;
+use shared::{CalendarRequest, CalendarResponse, DateState, DocumentPublicationDateRequest, DocumentPublicationDateResponse, PageRequest, PageResponse, UpdateDocumentRequest};
 use tokio::{fs::create_dir_all, io::AsyncWriteExt};
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
-use crate::{api::{CalendarRequest, CalendarResponse, DateState, DocumentPublicationDateRequest, DocumentPublicationDateResponse, PageRequest, PageResponse}, error::AppError, state::AppState};
+use utilites::Date;
+use crate::{error::AppError, state::AppState};
 
 //use crate::{Error, api::{CollectionAddRequest, CollectionUpdateRequest, DocumentRequest, EmbeddingRequest, GenerationRequest, types::QdrantContext}, state::AppState};
 use super::layers::{cors_layer};
@@ -25,6 +27,9 @@ pub fn app_router(app_state: Arc<AppState>) -> Router
 
     .route(&super::with_api_version(super::ApiVersion::V1,"/documents/publication_date"), 
          post(get_documents_by_publication_date))
+
+    .route(&super::with_api_version(super::ApiVersion::V1,"/documents/update"), 
+         post(update_document))
 
 
     //модели  
@@ -126,20 +131,10 @@ pub async fn get_calendar(
     Json(req): Json<CalendarRequest>)
 -> Result<Response<Body>, AppError>
 {
-
-    //FIXME заглушка для теста, заменить на выборку из БД
-
-    let date_from = req.from;
-    let mut result = HashMap::new();
-    result.insert(date_from.format(utilites::DateFormat::SerializeDate), DateState { checked: 20, unloaded: 5, count: 13});
-    let date_from_plus_1 = date_from.add_minutes(1440);
-    result.insert(date_from_plus_1.format(utilites::DateFormat::SerializeDate), DateState { checked: 80, unloaded: 24, count: 10});
-    let date_from_plus_2 = date_from_plus_1.add_minutes(1440);
-    result.insert(date_from_plus_2.format(utilites::DateFormat::SerializeDate), DateState { checked: 8, unloaded: 4, count: 12});
-
+    let state = app_state.summarization_service.get_calendar_state(req.from, Date::now()).await?;
     Ok((
         StatusCode::OK,
-        Json(CalendarResponse {dates: result})
+        Json(state)
     ).into_response())
 }
 
@@ -150,11 +145,23 @@ pub async fn get_documents_by_publication_date(
     Json(req): Json<DocumentPublicationDateRequest>)
 -> Result<Response<Body>, AppError>
 {
-
-    //FIXME заглушка для теста, заменить на выборку из БД
+    let result = app_state.summarization_service.get_documents_by_publication_date(req.publication_date.clone()).await?;
     Ok((
         StatusCode::OK,
-        Json(DocumentPublicationDateResponse { documents: mock_documents(), selected_date: req.publication_date })
+        Json(DocumentPublicationDateResponse { documents: result, selected_date: req.publication_date })
+    ).into_response())
+}
+
+pub async fn update_document(
+    ConnectInfo(_): ConnectInfo<SocketAddr>,
+    State(app_state): State<Arc<AppState>>,
+    Json(req): Json<UpdateDocumentRequest>)
+-> Result<Response<Body>, AppError>
+{
+    let result = app_state.summarization_service.update_document(req.document).await?;
+    Ok((
+        StatusCode::OK,
+        Json(result)
     ).into_response())
 }
 

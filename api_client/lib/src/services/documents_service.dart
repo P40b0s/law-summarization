@@ -3,6 +3,7 @@ import 'package:api_client/src/bindings/signals/signals.dart';
 import 'package:api_client/src/events/documents_events.dart';
 import 'package:api_client/src/providers/documents_provider.dart';
 import 'package:api_client/src/services/error_service.dart';
+import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:rinf/rinf.dart';
 
@@ -34,7 +35,8 @@ class DocumentsService
   void saveDocument(Document doc) 
   {
     provider.upsert(doc);
-    //DocumentSaveRequest(document: doc).sendSignalToRust();
+    debugPrint("Попытка обновить докеумент $doc");
+    UpdateDocumentRequest(document: doc).sendSignalToRust();
     _events.documentSaved(doc);   // эмитим после успешной отправки
   }
   
