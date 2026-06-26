@@ -1,21 +1,27 @@
 import 'dart:async';
 import 'package:api_client/src/bindings/signals/signals.dart';
+import 'package:api_client/src/events/event.dart';
 
-class DocumentEvents 
+class DocumentEvents extends Event<DocEvent>
 {
-  final _events = StreamController<DocEvent>.broadcast();
-  Stream<DocEvent> get events => _events.stream;
+  late final Stream<RequestDocumentsForDateEvent> requestDocumentsForDateEvent = getStream();
+
+  late final Stream<DocSavedEvent> docSavedEvent = getStream();
+
+  late final Stream<DocSelectedEvent> docSelectedEvent = getStream();
   
   void documentSaved(Document doc)
   {
-    _events.add(DocSavedEvent(doc));
+    push(DocSavedEvent(doc));
   }
   void documentSelected(Document doc)
   {
-    _events.add(DocSelectedEvent(doc));
+    push(DocSelectedEvent(doc));
   }
-  Stream<DocSavedEvent> get docSavedEvents => _events.stream.where((event) => event is DocSavedEvent).cast<DocSavedEvent>();
-  Stream<DocSelectedEvent> get docSelectedEvents => _events.stream.where((event) => event is DocSelectedEvent).cast<DocSelectedEvent>();
+  void requestDocumentsForDate(DateTime date)
+  {
+    push(RequestDocumentsForDateEvent(date));
+  }
 }
 
 
@@ -27,6 +33,11 @@ class DocUpdatedEvent extends DocEvent
 {
   final Document doc;
   const DocUpdatedEvent(this.doc);
+}
+class RequestDocumentsForDateEvent extends DocEvent 
+{
+  final DateTime date;
+  const RequestDocumentsForDateEvent(this.date);
 }
 class DocSavedEvent extends DocEvent 
 {

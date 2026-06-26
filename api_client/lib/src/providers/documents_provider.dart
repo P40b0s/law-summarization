@@ -14,24 +14,25 @@ class DocumentsListProvider extends ChangeNotifier
   String? get error => _error;
   TitleNotifier _title = TitleNotifier(count: 0, ready: 0, unloaded: 0);
   TitleNotifier get title => _title;
-  HashMap<String, Color> _colorMap = HashMap();
+  //HashMap<String, Color> _colorMap = HashMap();
   String? _isSelected;
   String? get isSelected => _isSelected;
-  Color getColor(Document doc) => _colorMap[doc.docId] ?? Colors.transparent;
-  Color getSelectedColor(Document doc) => _isSelected == doc.docId ? const Color.fromARGB(255, 211, 248, 236) : const Color.fromARGB(138, 245, 255, 252);
+  bool getIsSelected(Document doc) => _isSelected == doc.docId;
+  //Color getColor(Document doc) => _colorMap[doc.docId] ?? Colors.transparent;
+  //Color getSelectedColor(Document doc) => _isSelected == doc.docId ? const Color.fromARGB(255, 211, 248, 236) : const Color.fromARGB(255, 255, 255, 255);
   DocumentsListProvider();
 
   void setLoading(bool v) { _isLoading = v; notifyListeners(); }
   //TODO если добавиться еще какая то логика сделать отдельный метод _mutate и добавить все туда
   void setData(List<Document> documents, DateTime selectedDate) 
   {  
-    _colorMap.clear();
+    //_colorMap.clear();
     _documents = documents;
     _isSelected = null;
-    for (var doc in documents) 
-    {
-      _setColor(doc);
-    }
+    // for (var doc in documents) 
+    // {
+    //   _setColor(doc);
+    // }
     _selectedDate = selectedDate;
     _updateCounts();
     notifyListeners();
@@ -45,13 +46,13 @@ class DocumentsListProvider extends ChangeNotifier
     {
       _documents = [..._documents, doc];
       //_colorMap.remove(doc.docId); // сбрасываем цвет, чтобы пересчитать
-      _setColor(doc);
+      //_setColor(doc);
     } 
     else 
     {
       _documents = [..._documents]..[i] = doc;
       //_colorMap.remove(doc.docId); // сбрасываем цвет, чтобы пересчитать
-      _setColor(doc);
+      //_setColor(doc);
     }
     _updateCounts();
     notifyListeners();
@@ -70,20 +71,6 @@ class DocumentsListProvider extends ChangeNotifier
     {
       _title = TitleNotifier(count: count, ready: checked, unloaded: unloaded);
     }
-  }
-
-  void _setColor(Document doc) 
-  {
-    Color color = Colors.transparent;
-    if (doc.checkedTime == null || !doc.unloaded) 
-    {
-      color = const Color.fromARGB(166, 223, 72, 72);
-    } 
-    else 
-    {
-      color = const Color.fromARGB(125, 166, 248, 133);
-    }
-    _colorMap[doc.docId] = color;
   }
 }
 

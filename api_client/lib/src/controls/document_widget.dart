@@ -92,7 +92,7 @@ class _DocumentWidgetState extends State<DocumentWidget>
     if (_checkedTime.value != null) {
       try {
         DateTime cd = DateTime.parse(_checkedTime.value!);
-        return DateFormat('HH:mm dd.MM.yyyy').format(cd);
+        return "Проверено ${DateFormat('HH:mm dd.MM.yyyy').format(cd)}";
       } catch (e) {
         return "Ошибка формата";
       }
@@ -118,20 +118,13 @@ class _DocumentWidgetState extends State<DocumentWidget>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Заголовок с eoNumber
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.document.complexName,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                _buildCheckedTimeWidget(),
-              ],
+              // Заголовок
+            Text(
+              widget.document.complexName,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -158,22 +151,14 @@ class _DocumentWidgetState extends State<DocumentWidget>
                 border: OutlineInputBorder(),
               ),
               maxLines: 15,
-              onChanged: (c) 
-              {
-                //Future.delayed(Duration(milliseconds: 500), () =>  _summarizationText.value = c);
-              }
             ),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Чекбокс unloaded
-                _buildUnloadedCheckbox(),
+                // Чекбокс
+                _buildCheckedTimeWidget(),
                  TextButton(
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.lightGreen,
-                    foregroundColor: Colors.black
-                    ),
                   onPressed: () => _notifyDocumentChanged(context),
                   child: Text('Сохранить'),
                 ),
@@ -196,8 +181,6 @@ class _DocumentWidgetState extends State<DocumentWidget>
           builder: (context, value, child) {
             return Switch(
               value: value != null,
-              trackColor: trackColor,
-              overlayColor: overlayColor,
               onChanged: (_) {
                 if (_checkedTime.value == null) {
                   _checkedTime.value = DateFormat("yyyy-MM-ddTHH:mm:ss").format(DateTime.now());
@@ -213,7 +196,7 @@ class _DocumentWidgetState extends State<DocumentWidget>
           valueListenable: _checkedTime,
           builder: (context, value, child) {
             return SizedBox(
-              width: 150,
+              width: 250,
               child: Text(
               _checkedDateFormat(),
               style: TextStyle(
@@ -228,29 +211,29 @@ class _DocumentWidgetState extends State<DocumentWidget>
     );
   }
 
-  Widget _buildUnloadedCheckbox() 
-  {
-    return ValueListenableBuilder<bool>(
-      valueListenable: _unloaded,
-      builder: (context, value, child) 
-      {
-        final text =  value ? 'Выгружен' : "Не выгружен";
-        return Row(
-          children: [
-            Switch(
-              trackColor: trackColor,
-              overlayColor: overlayColor,
-              value: value,
-              onChanged: (c) => _unloaded.value = c,
-            ),
-            const SizedBox(width: 8),
-            Text(
-               text,
-              style: TextStyle(fontSize: 16),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  // Widget _buildUnloadedCheckbox() 
+  // {
+  //   return ValueListenableBuilder<bool>(
+  //     valueListenable: _unloaded,
+  //     builder: (context, value, child) 
+  //     {
+  //       final text =  value ? 'Выгружен' : "Не выгружен";
+  //       return Row(
+  //         children: [
+  //           Switch(
+  //             trackColor: trackColor,
+  //             overlayColor: overlayColor,
+  //             value: value,
+  //             onChanged: (c) => _unloaded.value = c,
+  //           ),
+  //           const SizedBox(width: 8),
+  //           Text(
+  //              text,
+  //             style: TextStyle(fontSize: 16),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 }

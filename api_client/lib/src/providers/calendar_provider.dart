@@ -1,13 +1,10 @@
 import 'dart:collection';
-
 import 'package:api_client/src/bindings/signals/signals.dart';
-import 'package:api_client/src/providers/error_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class CalendarProvider extends ChangeNotifier
 {
-
   final HashMap<String, int> _checkedDates = HashMap();
   final HashMap<String, bool> _selected = HashMap();
   final HashMap<String, int> _unloadedDates = HashMap();
@@ -20,12 +17,16 @@ class CalendarProvider extends ChangeNotifier
   int? unloaded(DateTime date) =>  _unloadedDates[formatter.format(date)];
   int? count(DateTime date) =>  _countDates[formatter.format(date)];
   bool? selected(DateTime date) =>  _selected[formatter.format(date)];
+  bool get anyIsSelected => _selected.values.any((v) => v);
   String keyString(DateTime date) => '${formatter.format(date)}_${checked(date)}_${unloaded(date)}_${count(date)}';
   int get requestDurationMin => _requestDurationMin;
+  late DateTime? _selectedDate;
+  DateTime? get selectedDate => _selectedDate;
   CalendarProvider();
 
   void selectDate(DateTime date)
   {
+    _selectedDate = date;
     _selected.updateAll(((key, value) => false));
     _selected[formatter.format(date)] = true;
     notifyListeners();
@@ -43,5 +44,4 @@ class CalendarProvider extends ChangeNotifier
     }
     notifyListeners();
   }
-
 }

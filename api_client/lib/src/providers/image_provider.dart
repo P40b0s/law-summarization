@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 
 class ImageProvider extends ChangeNotifier
@@ -7,13 +6,41 @@ class ImageProvider extends ChangeNotifier
   late int _currentPage;
   late int _maxPage;
   late String _docId;
-  late bool _isPageLoading = true;
-  late Uint8List? _currentImage;
+  bool _isPageLoading = true;
+  Uint8List? _currentImage;
   Key _imageKey = const ValueKey<int>(1);
+  String get docId => _docId;
+  int get maxPage => _maxPage;
+  int get currentPage => _currentPage;
+  bool get isPageLoading => _isPageLoading;
+  Uint8List? get currentImage => _currentImage;
+  Key get imageKey => _imageKey;
   ImageProvider();
-
-  void goToPage(int page)
+  void _genKey(int pageNumber)
   {
-    
+     _imageKey = ValueKey<String>(_docId + pageNumber.toString());
+  }
+  void setDocument(String docId, int initialPage, int maxPage)
+  {
+    _docId = docId;
+    _currentPage = initialPage;
+    _maxPage = maxPage;
+    requestPageState(initialPage);
+  }
+  ///оповещение о изменении страницы
+  void changePage(int page, Uint8List data)
+  {
+    _currentImage = data;
+    _isPageLoading = false;
+    _currentPage = page;
+    _genKey(page);
+    notifyListeners();
+  }
+  ///Запрос изображения страницы
+  void requestPageState(int pageNumber)
+  {
+    _isPageLoading = true;
+    _genKey(pageNumber);
+    notifyListeners();
   }
 }

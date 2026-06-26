@@ -49,9 +49,9 @@ class _DocumentsListState extends State<DocumentsList>
             elevation: 2,
             child: Column(
             children: [
-              _getSelectedDate(context),
+              _titleWidget(context),
               Divider(
-            color: Colors.blueAccent,     
+            color: Theme.of(context).colorScheme.primary,     
             thickness: 2,          
             indent: 20,              
             endIndent: 20,          
@@ -66,10 +66,12 @@ class _DocumentsListState extends State<DocumentsList>
               var document = documents[index];
                 return Material( 
                   elevation: 2.0,
-                  color: context.appServices.documentsService.provider.getSelectedColor(document),
+                  color: context.appServices.documentsService.provider.getIsSelected(document) ? 
+                    Theme.of(context).colorScheme.secondaryContainer : 
+                    Theme.of(context).colorScheme.surfaceContainerLow,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(4.0),
-                      side: BorderSide(color:  context.appServices.documentsService.provider.getColor(document), width: 1.0),
+                      side: BorderSide(color:  Theme.of(context).colorScheme.tertiaryFixed, width: 1.0),
                     ),
                   child:  InkWell(
                     onTap: () => context.appServices.documentsService.selectDocument(document),
@@ -83,8 +85,8 @@ class _DocumentsListState extends State<DocumentsList>
                              Row(
                               children: [
                                 _checkedIcon(document),
-                                SizedBox(width: 8,),
-                                _unloadedIcon(document),
+                                //SizedBox(width: 8,),
+                                //_unloadedIcon(document),
                               ],
                              )
                         ],
@@ -98,7 +100,7 @@ class _DocumentsListState extends State<DocumentsList>
 
                           Text(document.complexName,
                             softWrap: true, // Включает перенос слов (true по умолчанию)
-                            maxLines: 2,    // Максимальное количество строк (опционально)
+                            maxLines: 5,    // Максимальное количество строк (опционально)
                             overflow: TextOverflow.ellipsis),
                       ]),
                     
@@ -152,7 +154,7 @@ class _DocumentsListState extends State<DocumentsList>
     }
   }
 
-  Widget _getSelectedDate(BuildContext context) 
+  Widget _titleWidget(BuildContext context) 
   {
     final provider = context.appServices.documentsService.provider;
     final selectedDate = provider.selectedDate;
@@ -162,10 +164,21 @@ class _DocumentsListState extends State<DocumentsList>
     if (selectedDate != null)
     {
       var date = formatter.format(selectedDate);
-      return  ListTile(
-      leading: Icon(Icons.document_scanner_rounded),
-      title: Text('Список документов за $date'),
-      subtitle: Text('Выгружено: $unloaded/$overall Проверено: $checked/$overall')
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(onPressed: () => context.appServices.eventBus.calendarEvents.previousDate(), icon: const Icon(Icons.arrow_back_ios)),
+          Expanded( 
+            child: ListTile(
+              leading: Icon(Icons.document_scanner_rounded),
+              title: Text('Список документов за $date'),
+              subtitle: Text('Процесс: $checked/$overall')
+              )
+          ),
+          IconButton(onPressed: () => context.appServices.eventBus.calendarEvents.nextDate(), icon: const Icon(Icons.arrow_forward_ios)),
+        ],
       );
     }
     else

@@ -31,6 +31,7 @@ class _CalendarState extends State<Calendar>
     return  Card(
       margin: const EdgeInsets.all(8.0),
       elevation: 2,
+      //clipBehavior: Clip.hardEdge,
         child: PagedVerticalCalendar(
         minDate: context.appServices.calendarService.provider.minDate,
         maxDate: DateTime.now().add(Duration(days: 1)),
@@ -49,8 +50,8 @@ class _CalendarState extends State<Calendar>
         {
           final monthName = DateFormat.MMMM('ru_RU').format(DateTime(year, month));
           return Container(
-            color: Colors.grey[300],
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            color: Theme.of(context).colorScheme.primaryContainer,
+            padding: const EdgeInsets.symmetric(vertical: 1.0),
             child: Center(
               child: Text(
                 '$monthName $year',
@@ -72,8 +73,8 @@ class _CalendarState extends State<Calendar>
                       count: context.appServices.calendarService.provider.count(date),
                       checked: context.appServices.calendarService.provider.checked(date),
                       unloaded: context.appServices.calendarService.provider.unloaded(date),
-                      selected: context.appServices.calendarService.provider.selected(date) ?? false,
-                      onDateSelected: context.appServices.calendarService.provider.selectDate);
+                      selected: context.appServices.calendarService.provider.selected(date) ?? false);
+                      //onDateSelected: context.appServices.calendarService.provider.selectDate);
               })
           );
         },
@@ -90,7 +91,7 @@ class CalendarDayWidget extends StatelessWidget
   final int? unloaded;
   final int? count;
   final bool selected;
-  final Function(DateTime) onDateSelected;
+  //final Function(DateTime) onDateSelected;
 
   const CalendarDayWidget({
     super.key, 
@@ -99,7 +100,7 @@ class CalendarDayWidget extends StatelessWidget
     required this.checked, 
     required this.unloaded,
     required this.selected,
-    required this.onDateSelected
+    //required this.onDateSelected
   });
 
 
@@ -108,13 +109,16 @@ class CalendarDayWidget extends StatelessWidget
   {
     final keyString = context.appServices.calendarService.provider.keyString(date);
     return Container(
-      color: getToday(),
+      decoration: BoxDecoration(
+        color: getToday(context), 
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+          width: 0.0,
+          )
+        ),
       child: InkWell(
-        onTap: () => 
-        {
-          context.appServices.documentsService.getDocumentsForDate(date),
-          onDateSelected(date)
-        },
+        hoverColor: Theme.of(context).colorScheme.primary,
+        onTap: () => context.appServices.calendarService.selectDate(date),
         child: Column(
           key: ValueKey(keyString),
           children: [
@@ -122,22 +126,20 @@ class CalendarDayWidget extends StatelessWidget
               child: Center(
                 child: Text(
                   date.day.toString(), 
-                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w500, fontSize: 16),
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                 ),
               ),
             ),
             if (checked != null || unloaded != null || count != null)
               Expanded(
                 child: Tooltip(
-                    message: "Всего/проверено/выгружено",
+                    message: "Всего/проверено",
                     child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text((count ?? 0).toString(), style: const TextStyle(color: Color.fromARGB(255, 2, 2, 2), fontSize: 12)),
-                      const Text("/", style: TextStyle(fontSize: 8)),
-                      Text((checked ?? 0).toString(), style: const TextStyle(color: Colors.green, fontSize: 12)),
-                      const Text("/", style: TextStyle(fontSize: 8)),
-                      Text((unloaded ?? 0).toString(), style: const TextStyle(color: Colors.red, fontSize: 12)),
+                      Text((count ?? 0).toString(), style: const TextStyle(fontSize: 14)),
+                      const Text("/", style: TextStyle(fontSize: 14)),
+                      Text((checked ?? 0).toString(), style: const TextStyle(fontSize: 14)),
                     ],
                   )
                 )
@@ -148,22 +150,22 @@ class CalendarDayWidget extends StatelessWidget
     );
   }
 
-  Color getToday()
+  Color getToday(BuildContext context)
   {
     final dateNow = DateTime.now();
     final monthNow = dateNow.month;
     final dayNow = dateNow.day;
     if (selected)
     {
-      return const Color.fromARGB(92, 45, 198, 236);
+      return Theme.of(context).colorScheme.secondaryContainer;
     }
     else if (date.day == dayNow && monthNow == date.month)
     {
-      return Colors.lightGreen;
+      return Theme.of(context).colorScheme.primaryContainer;
     }
     else
     {
-      return Colors.transparent;
+      return Theme.of(context).colorScheme.surfaceContainerHigh.withValues(alpha: 0.7);
     }
   }
 }
