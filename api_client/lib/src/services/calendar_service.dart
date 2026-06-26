@@ -42,14 +42,6 @@ class CalendarService
     var prevDate = curDate.subtract(Duration(days: 1));
     selectDate(prevDate);
   }
-  void nexDate()
-  {
-
-  }
-  void previousDate()
-  {
-
-  }
 
   void _stopPeriodicTask() 
   {
@@ -70,6 +62,7 @@ class CalendarService
   void selectDate(DateTime date)
   {
     provider.selectDate(date);
+    _eventBus.calendarEvents.dateSelected(date);
     _eventBus.documentEvents.requestDocumentsForDate(date);
   }
   

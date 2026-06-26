@@ -133,13 +133,13 @@ class CalendarDayWidget extends StatelessWidget
             if (checked != null || unloaded != null || count != null)
               Expanded(
                 child: Tooltip(
-                    message: "Всего/проверено",
+                    message: "Проверено/Всего",
                     child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text((count ?? 0).toString(), style: const TextStyle(fontSize: 14)),
-                      const Text("/", style: TextStyle(fontSize: 14)),
                       Text((checked ?? 0).toString(), style: const TextStyle(fontSize: 14)),
+                      const Text("/", style: TextStyle(fontSize: 14)),
+                      Text((count ?? 0).toString(), style: const TextStyle(fontSize: 14)),
                     ],
                   )
                 )

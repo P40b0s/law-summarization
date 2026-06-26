@@ -47,6 +47,9 @@ class MyApp extends StatelessWidget
                         themeNotifier.value = currentMode.isDark ? ThemeMode.light : ThemeMode.dark;
                       },
                     ),
+                    //Это второй способ использовать провайдера из error_service
+                    //точно так же можно добавить других провайдеров и использовать их в виджетах
+                    //а не делать привязку к провадеру внутри
                         Consumer<ErrorProvider>(
                 builder: (context, errorProvider, _) => IconButton(
                   icon: Badge(
@@ -65,30 +68,8 @@ class MyApp extends StatelessWidget
           child: Row(
             textDirection: TextDirection.ltr,
             children: [
-              // SizedBox(width: 0, height: 0, child: 
-              //  ChangeNotifierProvider(
-              //     create: (_) => context.appServices.errorProvider,
-              //     child: const SnackBarExample(),
-              //  )),
               SizedBox(width: 480,  child: Leftpanel()),
-              SizedBox(width: 600, 
-                child: ImageViewer(),
-                // child: StreamBuilder<DocSelectedEvent>(
-                //   stream: context.appServices.eventBus.documentEvents.docSelectedEvent,
-                //   builder: (_, snapshot)
-                //   {
-                //     if(snapshot.hasData)
-                //     {
-                //       return ImageViewer(key: ValueKey(snapshot.data!.doc.docId), docId: snapshot.data!.doc.docId, initialPage: 1, maxPage: snapshot.data!.doc.pagesCount,);
-                //     }
-                //     else
-                //     {
-                //       return SizedBox.shrink();
-                //     }
-                //   }
-                // )
-              ),
-              //SizedBox(width: 600, child: ImageViewer(docId: "5133ba0c-1d95-42e5-822f-c10c691b467d", initialPage: 1, maxPage: 2,),),
+              SizedBox(width: 600, child: ImageViewer()),
               Expanded(child: StreamBuilder<DocSelectedEvent>(
                 stream: context.appServices.eventBus.documentEvents.docSelectedEvent,
                 builder: (_, snapshot)

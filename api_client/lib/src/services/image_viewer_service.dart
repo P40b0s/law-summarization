@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:api_client/src/bindings/signals/signals.dart';
+import 'package:api_client/src/events/calendar_events.dart';
 import 'package:api_client/src/events/documents_events.dart';
 import 'package:api_client/src/providers/image_provider.dart';
 import 'package:api_client/src/services.dart';
@@ -13,10 +14,12 @@ class ImageViewerService
   final ImageProvider provider = ImageProvider();
   late final StreamSubscription _sub;
   late final StreamSubscription _documentSelectedEventSub;
+  late final StreamSubscription _dateSelectedEventSub;
   ImageViewerService({required this._eventBus, required this._errorService}) 
   {
     _sub = PageResponse.rustSignalStream.listen((pack) => _onResponse(pack));
     _documentSelectedEventSub = _eventBus.documentEvents.docSelectedEvent.listen(_onDocumentSelectedEvent);
+    _dateSelectedEventSub = _eventBus.calendarEvents.selectDateEvent.listen(_onDateSelectedEvent);
   }
   
   void _onResponse(RustSignalPack<PageResponse> signal) 
@@ -28,6 +31,10 @@ class ImageViewerService
   {
     provider.setDocument(event.doc.docId, 1, event.doc.pagesCount);
     requestPage(1);
+  }
+  void _onDateSelectedEvent(_)
+  {
+    provider.noDocument();
   }
 
   void requestPage(int pageNum)

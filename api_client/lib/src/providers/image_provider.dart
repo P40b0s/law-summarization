@@ -27,6 +27,14 @@ class ImageProvider extends ChangeNotifier
     _maxPage = maxPage;
     requestPageState(initialPage);
   }
+  void noDocument()
+  {
+    _docId = "";
+    _currentPage = 0;
+    _maxPage = 0;
+    _currentImage = null;
+    notifyListeners();
+  }
   ///оповещение о изменении страницы
   void changePage(int page, Uint8List data)
   {

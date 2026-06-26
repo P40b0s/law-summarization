@@ -3,6 +3,7 @@ import 'package:api_client/src/services.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+//FIXME переделать для провайдера!
 // Виджет для редактирования Document
 class DocumentWidget extends StatefulWidget 
 {
@@ -158,10 +159,17 @@ class _DocumentWidgetState extends State<DocumentWidget>
               children: [
                 // Чекбокс
                 _buildCheckedTimeWidget(),
-                 TextButton(
-                  onPressed: () => _notifyDocumentChanged(context),
-                  child: Text('Сохранить'),
-                ),
+                ElevatedButton.icon(
+                    icon: const Icon(Icons.save),
+                    onPressed: () =>  _notifyDocumentChanged(context),
+                    label: const Text('Сохранить'),
+                    style: ElevatedButton.styleFrom(
+                      textStyle: TextStyle(fontFamily: 'Roboto'),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(8)),
+                      ),
+                    ),
+                  ),
               ],
             )
            
