@@ -6,6 +6,7 @@ import 'package:api_client/src/services/documents_service.dart';
 import 'package:api_client/src/services/error_service.dart';
 import 'package:api_client/src/services/health_service.dart';
 import 'package:api_client/src/services/image_viewer_service.dart';
+import 'package:api_client/src/services/task_progress_service.dart';
 import 'package:flutter/material.dart';
 
 class EventBus
@@ -25,6 +26,7 @@ class AppServices
   late ImageViewerService imageViewerService;
   late ErrorService errorService;
   late HealthService healthService;
+  late TaskProgressService taskProgressService;
   AppServices._()
   {
     errorService = ErrorService();
@@ -32,6 +34,7 @@ class AppServices
     calendarService = CalendarService(eventBus: eventBus);
     imageViewerService = ImageViewerService(eventBus: eventBus, errorService: errorService);
     healthService = HealthService(eventBus: eventBus);
+    taskProgressService = TaskProgressService(eventBus: eventBus);
   }
   static void init()
   {
