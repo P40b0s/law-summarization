@@ -177,6 +177,28 @@ impl Into<shared::Document> for Document
     }
 }
 
+#[derive(Serialize, RustSignal)]
+pub struct ServiceDocumentsProgress
+{
+    pub count: i32,
+    pub progress: i32,
+}
+
+#[derive(Serialize, RustSignal)]
+pub struct ServicePagesProgress
+{
+    pub count: i32,
+    pub progress: i32,
+}
+
+#[derive(Serialize, RustSignal)]
+pub struct ServiceHealth
+{
+    pub alive: bool,
+}
+
+
+
 
 #[derive(Serialize, RustSignal)]
 pub struct ErrorSignal

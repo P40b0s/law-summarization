@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 use serde::{Deserialize, Serialize};
 use utilites::Date;
 
@@ -25,7 +25,7 @@ pub struct CalendarResponse
 {
     pub dates: HashMap<String, DateState>
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct DateState
 {
     pub checked: i32,
@@ -63,4 +63,56 @@ pub struct Document
     pub checked_time: Option<utilites::Date>,
     pub unloaded: bool,
     pub pages_count: i32,
+}
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SseMessage
+{
+    DocsProgressInfo
+    {
+        count: i32,
+        progress: i32,
+    },
+    PagesProgressInfo
+    {
+        count: i32,
+        progress: i32
+    },
+    Health,
+    CalendarUpdate
+    {
+        date: String,
+        state: DateState
+    }
+}
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SseMessageType
+{
+    Info
+}
+impl AsRef<str> for SseMessageType
+{
+    fn as_ref(&self) -> &str 
+    {
+        match self 
+        {
+            Self::Info => "info"    
+        }
+    }
+}
+
+impl FromStr for SseMessageType
+{
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> 
+    {
+        match s
+        {
+            "info" => Ok(SseMessageType::Info),
+            _ => Err(format!("Неизвестное значение: {}", s))
+        }
+    }
 }

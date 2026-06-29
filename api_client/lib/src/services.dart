@@ -4,6 +4,7 @@ import 'package:api_client/src/providers/error_provider.dart';
 import 'package:api_client/src/services/calendar_service.dart';
 import 'package:api_client/src/services/documents_service.dart';
 import 'package:api_client/src/services/error_service.dart';
+import 'package:api_client/src/services/health_service.dart';
 import 'package:api_client/src/services/image_viewer_service.dart';
 import 'package:flutter/material.dart';
 
@@ -23,12 +24,14 @@ class AppServices
   late CalendarService calendarService;
   late ImageViewerService imageViewerService;
   late ErrorService errorService;
+  late HealthService healthService;
   AppServices._()
   {
     errorService = ErrorService();
     documentsService = DocumentsService(eventBus: eventBus, errorService: errorService);
     calendarService = CalendarService(eventBus: eventBus);
     imageViewerService = ImageViewerService(eventBus: eventBus, errorService: errorService);
+    healthService = HealthService(eventBus: eventBus);
   }
   static void init()
   {
@@ -41,6 +44,7 @@ class AppServices
     await calendarService.dispose();
     await imageViewerService.dispose();
     await errorService.dispose();
+    await healthService.dispose();
     
   }
 }

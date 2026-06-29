@@ -1,7 +1,6 @@
 mod logger;
 mod error;
 mod state;
-
 use arc_swap::ArcSwap;
 use axum::{extract::Path, http::StatusCode, response::IntoResponse, routing::{get, post}, Extension, Json, Router};
 use publication_client::{ExtendedPublicationDocumentCard, PublicationApiClient, ReqwestPublicationApiClient};
@@ -15,7 +14,7 @@ mod api;
 use state::AppState;
 use api::router;
 mod configuration;
-use crate::configuration::Configuration;
+use crate::{configuration::Configuration};
 
 
 #[tokio::main]
@@ -42,7 +41,9 @@ async fn main() -> anyhow::Result<()>
     // });
     let summarization_service = Arc::new(SummarizationService::new(core_config, "qwen3.6"));
     let background_service = Arc::clone(&summarization_service);
+    let health_service = Arc::clone(&summarization_service);
     tokio::spawn(async move  { background_service.start_service().await } );
+    tokio::spawn(async move  { health_service.start_health_check().await } );
     let app_state = AppState {
         configuration: config.load().clone(),
         summarization_service: summarization_service,

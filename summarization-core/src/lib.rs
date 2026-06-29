@@ -13,7 +13,8 @@ use chrono::Days;
 pub use database::{DbCommand, start_database_service};
 pub use shared::Document;
 pub use configuration::CoreConfiguration;
-use tokio::sync::oneshot;
+use shared::{DateState, SseMessage};
+use tokio::{spawn, sync::oneshot};
 use publication_client::{PublicationDocumentCard, ReqwestPublicationApiClient};
 pub use publication_service::PublicationService;
 pub use ai_service::{AiService, ChatCompletionRequest, MessageWithContent};
@@ -27,6 +28,7 @@ use crate::scheduler::ShedulerNew;
 pub struct SummarizationService
 {
     pub publication_service: PublicationService<ReqwestPublicationApiClient>,
+    pub events_stream: tokio::sync::broadcast::Sender<SseMessage>,
     databse_service: tokio::sync::mpsc::Sender<DbCommand>,
     ai_service: AiService,
     configuration: Arc<CoreConfiguration>
@@ -47,8 +49,13 @@ impl SummarizationService
             publication_service,
             databse_service: db_sender,
             ai_service,
-            configuration: config
+            configuration: config,
+            events_stream: tokio::sync::broadcast::channel(100).0,
         }
+    }
+    pub fn subscribe_events(&self) -> tokio::sync::broadcast::Receiver<SseMessage>
+    {
+        self.events_stream.subscribe()
     }
 
     pub async fn start_service(&self)
@@ -70,7 +77,17 @@ impl SummarizationService
             }
             interval.tick().await;
         }
+    }
 
+    pub async fn start_health_check(&self)
+    {
+        let mut interval = tokio::time::interval(Duration::from_secs(10 as u64));
+        interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+        loop 
+        {
+            let _ = self.events_stream.send(SseMessage::Health);
+            interval.tick().await;
+        }
     }
     async fn processig_documents_for_dates_range(&self, retro_checked_days: usize) -> anyhow::Result<()>
     {
@@ -88,10 +105,20 @@ impl SummarizationService
         for date in dates
         {
             let documents = self.get_documents_for_date(date).await?;
-            for doc in documents
+            let docs_len = documents.len();
+            if docs_len > 0
             {
-                let _ = self.process_document(doc).await?;
+                for (i, doc) in documents.into_iter().enumerate()
+                {
+                    let _ = self.events_stream.send(SseMessage::DocsProgressInfo
+                    { 
+                        count: docs_len as i32,
+                        progress: (i+1) as i32,
+                    });
+                    let _ = self.process_document(doc).await?;
+                }
             }
+           
         };
         Ok(())
     }
@@ -137,6 +164,13 @@ impl SummarizationService
             let text = self.ai_service.recognize_image(&image, "Распознай весь текст с этого изображения. Запиши его в markdown формате, используй заголовки списки и таблицы, вместо '\n' используй кодировку юникода U+000A, без комментариев, закончи, когда текст на изображении кончится", Some(0.0)).await.unwrap();
             texts.push_str(&text);
             info!("Fetched PNG for document {} page {}: {} bytes", card.id, page, png.len());
+          
+            let _ = self.events_stream.send(SseMessage::PagesProgressInfo
+            { 
+                count: card.pages_count as i32,
+                progress: page as i32,
+            });
+            
         }
         let command = format!("Составь краткое содержание этого документа в 2-6 предложениях, начинай в подобном формате (например если федеральный закон): \"Федеральный закон № 133-ФЗ от 25 мая 2026 года... и дальше содержание документа\", не дополняй кем подписан документ и где, так же не уточняй кем принят или одобрен, нужно только краткое содержание текста. Делай на основе следующего текста: {}", texts);
         let message = MessageWithContent
@@ -152,7 +186,7 @@ impl SummarizationService
         self.databse_service.send(DbCommand::InsertDocument 
         { 
             doc_id: card.id.clone(),
-            publication_date: card.publish_date_short,
+            publication_date: card.publish_date_short.clone(),
             eo_number: card.eo_number,
             complex_name: card.complex_name,
             summary: Some(summarization),
@@ -164,6 +198,24 @@ impl SummarizationService
             Ok(_) => 
             {
                 info!("Document {} saved to DB", card.id);
+                let (db_result_sender, db_result_receiver) = oneshot::channel();
+                self.databse_service.send(DbCommand::GetCalendarState { date_from: card.publish_date_short.clone(), date_to: card.publish_date_short, respond: db_result_sender }).await?;
+                if let Ok(mut r) = db_result_receiver.await?
+                {
+                    if let Some(item) = r.pop()
+                    {
+                        let _ = self.events_stream.send(SseMessage::CalendarUpdate 
+                        { 
+                            date: item.publication_date,
+                            state: DateState
+                            {
+                                checked: item.checked_count as i32,
+                                unloaded: item.unloaded_count as i32,
+                                count: item.total_count as i32,
+                            } 
+                        });
+                    }
+                }
                Ok(())
             },
             Err(e) => 

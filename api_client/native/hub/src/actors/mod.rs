@@ -12,7 +12,8 @@ use crate::configuration::Configuration;
 // use tokio_with_wasm::alias as tokio;
 
 /// Creates and spawns the actors in the async system.
-pub async fn create_actors() {
+pub async fn create_actors() 
+{
     // Though simple async tasks work, using the actor model
     // is highly recommended for state management
     // to achieve modularity and scalability in your app.

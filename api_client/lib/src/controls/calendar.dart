@@ -49,15 +49,35 @@ class _CalendarState extends State<Calendar>
         monthBuilder: (context, month, year) 
         {
           final monthName = DateFormat.MMMM('ru_RU').format(DateTime(year, month));
-          return Container(
-            color: Theme.of(context).colorScheme.primaryContainer,
-            padding: const EdgeInsets.symmetric(vertical: 1.0),
-            child: Center(
-              child: Text(
-                '$monthName $year',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          return Column(
+            children: [
+              Container(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                padding: const EdgeInsets.symmetric(vertical: 1.0),
+                child: Center(
+                  child: Text(
+                    '$monthName $year',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
               ),
-            ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Пн'),
+                    Text('Вт'),
+                    Text('Ср'),
+                    Text('Чт'),
+                    Text('Пт'),
+                    Text('Сб'),
+                    Text('Вс'),
+                  ],
+                ),
+              ),
+            ],
           );
         },
         dayBuilder: (context, date) 
@@ -155,9 +175,14 @@ class CalendarDayWidget extends StatelessWidget
     final dateNow = DateTime.now();
     final monthNow = dateNow.month;
     final dayNow = dateNow.day;
+    
     if (selected)
     {
       return Theme.of(context).colorScheme.secondaryContainer;
+    }
+    if (date.weekday == 6 || date.weekday == 7)
+    {
+      return Colors.lightGreen.withValues(alpha: 0.6);
     }
     else if (date.day == dayNow && monthNow == date.month)
     {

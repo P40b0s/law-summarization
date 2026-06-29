@@ -3,13 +3,13 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use messages::{actor::Actor, address::Address, context::Context, handler::Notifiable};
 use rinf::{DartSignal, RustSignal, RustSignalBinary, debug_print};
-use tokio::task::JoinSet;
+use tokio::{spawn, task::JoinSet};
 use tracing::error;
 use crate::{client::ApiClient, configuration::Configuration, signals::{CalendarRequest, CalendarResponse, DocumentPublicationDateRequest, DocumentPublicationDateResponse, ErrorSignal, PageRequest, PageResponse, UpdateDocumentRequest}};
 /// Actor definition that will hold state in real apps.
 pub struct ServicesActor 
 {
-  client: ApiClient,
+  client: Arc<ApiClient>,
   _owned_tasks: JoinSet<()>
 }
 
@@ -19,15 +19,18 @@ impl ServicesActor
 {
   pub fn new(self_addr: Address<Self>, conf: Arc<Configuration>) -> Self 
   {
+    let client = Arc::new(ApiClient::new(conf));
     let mut owned_tasks = JoinSet::new();
     owned_tasks.spawn(Self::listen_to_pages_request(self_addr.clone()));
     owned_tasks.spawn(Self::listen_to_calendar_request(self_addr.clone()));
     owned_tasks.spawn(Self::listen_to_documents_by_date_request(self_addr.clone()));
     owned_tasks.spawn(Self::listen_to_document_update(self_addr.clone()));
+    let events_client = Arc::clone(&client);
+    spawn(async move {events_client.events_handler().await});
     Self 
     { 
-        client: ApiClient::new(conf),
-        _owned_tasks: owned_tasks
+      client,
+      _owned_tasks: owned_tasks
     }
   }
 

@@ -1,9 +1,11 @@
 import 'package:api_client/src/controls/document_widget.dart';
+import 'package:api_client/src/controls/health_status.dart';
 import 'package:api_client/src/controls/image_viewer.dart';
 import 'package:api_client/src/controls/left_panel.dart';
 import 'package:api_client/src/controls/toast.dart';
 import 'package:api_client/src/events/documents_events.dart';
 import 'package:api_client/src/providers/error_provider.dart';
+import 'package:api_client/src/providers/health_provider.dart';
 import 'package:api_client/src/services.dart';
 import 'package:api_client/src/themes.dart';
 import 'package:provider/provider.dart';
@@ -27,7 +29,7 @@ class MyApp extends StatelessWidget
   {
     return MultiProvider(providers: [
       ChangeNotifierProvider.value(
-            value: context.appServices.errorService.provider)
+            value: context.appServices.errorService.provider),
     ],
     child:  ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
@@ -40,6 +42,7 @@ class MyApp extends StatelessWidget
       home: Scaffold(
         appBar: AppBar(title: const Text('Проверка документов сервиса суммаризации'), shape: Border.all( color: Colors.black, width: 2.0),
         actions: [
+                    HealthStatus(),
                     IconButton(
                       icon: Icon(currentMode.isDark ? Icons.wb_sunny : Icons.nightlight_round),
                       onPressed: () 
@@ -50,18 +53,17 @@ class MyApp extends StatelessWidget
                     //Это второй способ использовать провайдера из error_service
                     //точно так же можно добавить других провайдеров и использовать их в виджетах
                     //а не делать привязку к провадеру внутри
-                        Consumer<ErrorProvider>(
-                builder: (context, errorProvider, _) => IconButton(
-                  icon: Badge(
-                    isLabelVisible: errorProvider.count > 0,
-                    label: Text('${errorProvider.count}'),
-                    child: const Icon(Icons.history),
-                  ),
-                  tooltip: 'Recent errors',
-                  onPressed: () => RecentErrorsPanel.show(context),
-                ),
+                    Consumer<ErrorProvider>(
+                      builder: (context, errorProvider, _) => IconButton(
+                        icon: Badge(
+                          isLabelVisible: errorProvider.count > 0,
+                          label: Text('${errorProvider.count}'),
+                          child: const Icon(Icons.history),
+                        ),
+                        tooltip: 'Recent errors',
+                        onPressed: () => RecentErrorsPanel.show(context),
+                      ),
               ),
-          
         ],),
         
         body: Padding(padding: EdgeInsets.all(30),

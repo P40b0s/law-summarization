@@ -18,7 +18,8 @@ class CalendarService
     _sub = CalendarResponse.rustSignalStream.listen((pack) => _onResponse(pack));
     _nextDateSelectEventSub = _eventBus.calendarEvents.nextDateEvent.listen(_onNextDateEvent);
     _prevDateSelectEventSub = _eventBus.calendarEvents.previousDateEvent.listen(_onPrevDateEvent);
-    _startPeriodicTask();
+    CalendarRequest(from: provider.formatter.format(provider.minDate)).sendSignalToRust();
+    //_startPeriodicTask();
   }
 
   Future<void> _startPeriodicTask() async 

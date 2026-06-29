@@ -1,8 +1,10 @@
-use std::{collections::HashMap, net::SocketAddr, sync::Arc};
-use axum::{body::Body, extract::{ConnectInfo, DefaultBodyLimit, Path, State}, http::{header, HeaderValue, StatusCode}, response::{IntoResponse, Response}, routing::{get, post}, Extension, Json, Router};
+use std::{collections::HashMap, convert::Infallible, net::SocketAddr, sync::Arc, time::Duration};
+use axum::{Extension, Json, Router, body::Body, extract::{ConnectInfo, DefaultBodyLimit, Path, State}, http::{HeaderValue, StatusCode, header}, response::{IntoResponse, Response, Sse, sse::Event}, routing::{get, post}};
+use futures::{Stream, stream};
 use serde::Serialize;
-use shared::{CalendarRequest, CalendarResponse, DateState, DocumentPublicationDateRequest, DocumentPublicationDateResponse, PageRequest, PageResponse, UpdateDocumentRequest};
+use shared::{CalendarRequest, CalendarResponse, DateState, DocumentPublicationDateRequest, DocumentPublicationDateResponse, PageRequest, PageResponse, SseMessage, SseMessageType, UpdateDocumentRequest};
 use tokio::{fs::create_dir_all, io::AsyncWriteExt};
+use tokio_stream::StreamExt;
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
 use utilites::Date;
 use crate::{error::AppError, state::AppState};
@@ -31,6 +33,8 @@ pub fn app_router(app_state: Arc<AppState>) -> Router
     .route(&super::with_api_version(super::ApiVersion::V1,"/documents/update"), 
          post(update_document))
 
+    .route(&super::with_api_version(super::ApiVersion::V1,"/events"), 
+         get(sse_handler))
 
     //модели  
     //     .route(&super::with_api_version(super::ApiVersion::V1,"/models/load_generation_model"), 
@@ -165,118 +169,6 @@ pub async fn update_document(
     ).into_response())
 }
 
-
-fn mock_documents() -> Vec<summarization_core::Document>
-{
-    vec![
-        summarization_core::Document
-        {
-            doc_id: "5133ba0c-1d95-42e5-822f-c10c691b467d".to_owned(),
-            eo_number: "0001202605220017".to_owned(),
-            complex_name: "О внесении изменений в Указ Президента Российской Федерации от 27 апреля 2007 г. № 556 \"О реструктуризации атомного энергопромышленного комплекса Российской Федерации" .to_owned(),
-            publication_date: utilites::Date::parse("2026-05-22").unwrap(),
-            summarization_text: Some("Краткое содержание документа 123".to_owned()),
-            checked_time: None,
-            unloaded: false,
-            pages_count: 2,
-        },
-        summarization_core::Document
-        {
-            doc_id: "27e492a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
-            eo_number: "0001202606080025".to_owned(),
-            complex_name: "О мерах по реализации подпункта 7.1.89 пункта 7 решения Комиссии Таможенного союза от 27 ноября 2009 г. № 130 \"О едином таможенно-тарифном регулировании Евразийского экономического союза\" в отношении какао-пасты необезжиренной, какао-масла и какао-жира\"".to_owned(),
-            publication_date: utilites::Date::parse("2026-06-08").unwrap(),
-            summarization_text: Some("Краткое содержание документа 456".to_owned()),
-            checked_time: None,
-            unloaded: false,
-            pages_count: 17
-        },
-        summarization_core::Document
-        {
-            doc_id: "7bde4ed1-0c05-4d86-b098-3f2ab6723bea".to_owned(),
-            eo_number: "0001202606120019".to_owned(),
-            complex_name: "О награждении государственными наградами Российской Федерации".to_owned(),
-            publication_date: utilites::Date::parse("2026-06-12").unwrap(),
-            summarization_text: Some("Краткое содержание документа 456".to_owned()),
-            checked_time: None,
-            unloaded: false,
-            pages_count: 24
-        },
-        // summarization_core::Document
-        // {
-        //     doc_id: "27e692a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
-        //     eo_number: "0001202606080025".to_owned(),
-        //     complex_name: "Постановление Правительства Российской Федерации от 12.06.2026 № 737
-        //     \"О централизации закупок отдельных видов медицинских изделий для обеспечения государственных нужд в целях реализации мероприятий (результатов) федерального проекта \"Борьба с сахарным диабетом\", входящего в состав национального проекта \"Продолжительная и активная жизнь\"".to_owned(),
-        //     publication_date: utilites::Date::parse("2026-06-08").unwrap(),
-        //     summarization_text: Some("Краткое содержание документа 456".to_owned()),
-        //     checked_time: None,
-        //     unloaded: false,
-        //     pages_count: 17
-        // },
-        // summarization_core::Document
-        // {
-        //     doc_id: "27e792a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
-        //     eo_number: "0001202606080025".to_owned(),
-        //     complex_name: "Комплекс 2".to_owned(),
-        //     publication_date: utilites::Date::parse("2026-06-08").unwrap(),
-        //     summarization_text: Some("Краткое содержание документа 456".to_owned()),
-        //     checked_time: None,
-        //     unloaded: false,
-        // },
-        // summarization_core::Document
-        // {
-        //     doc_id: "27e892a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
-        //     eo_number: "0001202606080025".to_owned(),
-        //     complex_name: "Комплекс 2".to_owned(),
-        //     publication_date: utilites::Date::parse("2026-06-08").unwrap(),
-        //     summarization_text: Some("Краткое содержание документа 456".to_owned()),
-        //     checked_time: None,
-        //     unloaded: false,
-        // },
-        // summarization_core::Document
-        // {
-        //     doc_id: "27e992a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
-        //     eo_number: "0001202606080025".to_owned(),
-        //     complex_name: "Комплекс 2".to_owned(),
-        //     publication_date: utilites::Date::parse("2026-06-08").unwrap(),
-        //     summarization_text: Some("Краткое содержание документа 456".to_owned()),
-        //     checked_time: None,
-        //     unloaded: false,
-        // },
-        // summarization_core::Document
-        // {
-        //     doc_id: "27e402a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
-        //     eo_number: "0001202606080025".to_owned(),
-        //     complex_name: "Комплекс 2".to_owned(),
-        //     publication_date: utilites::Date::parse("2026-06-08").unwrap(),
-        //     summarization_text: Some("Краткое содержание документа 456".to_owned()),
-        //     checked_time: None,
-        //     unloaded: false,
-        // },
-        // summarization_core::Document
-        // {
-        //     doc_id: "27e412a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
-        //     eo_number: "0001202606080025".to_owned(),
-        //     complex_name: "Комплекс 2".to_owned(),
-        //     publication_date: utilites::Date::parse("2026-06-08").unwrap(),
-        //     summarization_text: Some("Краткое содержание документа 456".to_owned()),
-        //     checked_time: None,
-        //     unloaded: false,
-        // },
-        // summarization_core::Document
-        // {
-        //     doc_id: "27e422a0-cfe1-4b72-b53a-1f988dfcfa82".to_owned(),
-        //     eo_number: "0001202606080025".to_owned(),
-        //     complex_name: "Комплекс 2".to_owned(),
-        //     publication_date: utilites::Date::parse("2026-06-08").unwrap(),
-        //     summarization_text: Some("Краткое содержание документа 456".to_owned()),
-        //     checked_time: None,
-        //     unloaded: false,
-        // },
-    ]
-}  
-
 pub async fn get_page(
     ConnectInfo(_): ConnectInfo<SocketAddr>,
     State(app_state): State<Arc<AppState>>,
@@ -295,6 +187,30 @@ pub async fn get_page(
     ).into_response())
 }
 
+
+
+async fn sse_handler(
+     State(app_state): State<Arc<AppState>>,
+) -> Sse<impl Stream<Item = Result<Event, Infallible>>> 
+{
+    let rx = app_state.summarization_service.subscribe_events();
+    let stream = tokio_stream::wrappers::BroadcastStream::new(rx)
+        .filter_map(|result|
+        {
+            match result 
+            {
+                Ok(sse_message) => 
+                {
+                    Some(Ok(Event::default()
+                                .event(SseMessageType::Info)
+                                .data(serde_json::to_string(&sse_message).unwrap())
+                                .id(chrono::Utc::now().timestamp().to_string())))
+                }
+                Err(_) => None,
+            }
+        });
+    Sse::new(stream)
+}
 // pub async fn delete_document(
 //     ConnectInfo(_): ConnectInfo<SocketAddr>,
 //     State(app_state): State<Arc<AppState>>,
