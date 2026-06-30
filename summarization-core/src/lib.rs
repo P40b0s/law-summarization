@@ -39,7 +39,7 @@ impl SummarizationService
 {
     pub fn new(config: Arc<CoreConfiguration>, model: &str) -> Self
     {
-        let client  = ReqwestPublicationApiClient::new();
+        let client  = ReqwestPublicationApiClient::new(config.publication_api_url.clone(), config.publication_base_url.clone());
         let publication_service = PublicationService::new(client, config.clone());
         let ai_service = ai_service::AiService::new(model.to_owned(), config.clone());
         let (db_sender, db_receiver) = tokio::sync::mpsc::channel(16);
@@ -297,78 +297,78 @@ impl SummarizationService
 }
 
 
-pub async fn run_service(config: Arc<CoreConfiguration>, db_sender: tokio::sync::mpsc::Sender<DbCommand>) -> anyhow::Result<()>
-{
-    //let (db_sender, db_receiver) = tokio::sync::mpsc::channel(16);
-    //let _db_service = start_database_service(db_receiver).await;
-    let client  = ReqwestPublicationApiClient::new();
-    let publication_service = PublicationService::new(client, config.clone());
-    let ai_service = ai_service::AiService::new("qwen3.6".to_owned(), config.clone());
-    loop 
-    {
-        let date = Date::now();
-        let result = publication_service.search_documents(&date).await?;
-        for card in result
-        {
-            let (db_result_sender, db_result_receiver) = oneshot::channel();
-            let _db_doc = db_sender.send(DbCommand::GetDocument { eo_number: card.eo_number.clone(), respond: db_result_sender }).await?;
-            match db_result_receiver.await?
-            {
-                Ok(Some(doc)) => 
-                {
-                    // document already exists in DB, skip
-                    info!("Document {} already exists in DB, skipping", doc.eo_number);
-                }
-                Ok(None) => 
-                {
-                    // document not in DB, process it
-                    info!("Processing new document {}", card.eo_number);
-                    let mut texts = String::new();
-                    for page in 1..=card.pages_count
-                    {
-                        let png = publication_service.get_png(&card.id, page).await?;
-                        let image = recognition::bytes_to_base64url(&png);
-                        let text = ai_service.recognize_image(&image, "Распознай весь текст с этого изображения. Запиши его в markdown формате, используй заголовки списки и таблицы, вместо '\n' используй кодировку юникода U+000A, без комментариев, закончи, когда текст на изображении кончится", Some(0.0)).await.unwrap();
-                        texts.push_str(&text);
-                        info!("Fetched PNG for document {} page {}: {} bytes", card.id, page, png.len());
-                    }
-                    let command = format!("Составь краткое содержание этого документа в 2-6 предложениях, начинай в подобном формате (например если федеральный закон): \"Федеральный закон № 133-ФЗ от 25 мая 2026 года... и дальше содержание документа\", не дополняй кем подписан документ и где, так же не уточняй кем принят или одобрен, нужно только краткое содержание текста. Делай на основе следующего текста: {}", texts);
-                    let message = MessageWithContent
-                    {
-                        role: "user".to_owned(),
-                        content: vec![serde_json::json!({
-                            "type": "text",
-                            "text": command
-                        })]
-                    };
-                    let summarization = ai_service.chat(vec![message], Some(0.0)).await.unwrap();
-                    let (db_result_sender, db_result_receiver) = oneshot::channel();
-                    db_sender.send(DbCommand::InsertDocument 
-                    { 
-                        doc_id: card.id.clone(),
-                        publication_date: card.publish_date_short,
-                        eo_number: card.eo_number,
-                        complex_name: card.complex_name,
-                        summary: Some(summarization),
-                        respond: db_result_sender,
-                        pages_count: card.pages_count as i32
-                    }).await?;
-                    match db_result_receiver.await?
-                    {
-                        Ok(_) => info!("Document {} saved to DB", card.id),
-                        Err(e) => error!("Failed to save document {} to DB: {}", card.id, e),
-                    }
-                }
-                Err(e) => 
-                {
-                    error!("Failed to query DB for document {}: {}", card.eo_number, e);
-                }
-            }
+// pub async fn run_service(config: Arc<CoreConfiguration>, db_sender: tokio::sync::mpsc::Sender<DbCommand>) -> anyhow::Result<()>
+// {
+//     //let (db_sender, db_receiver) = tokio::sync::mpsc::channel(16);
+//     //let _db_service = start_database_service(db_receiver).await;
+//     let client  = ReqwestPublicationApiClient::new();
+//     let publication_service = PublicationService::new(client, config.clone());
+//     let ai_service = ai_service::AiService::new("qwen3.6".to_owned(), config.clone());
+//     loop 
+//     {
+//         let date = Date::now();
+//         let result = publication_service.search_documents(&date).await?;
+//         for card in result
+//         {
+//             let (db_result_sender, db_result_receiver) = oneshot::channel();
+//             let _db_doc = db_sender.send(DbCommand::GetDocument { eo_number: card.eo_number.clone(), respond: db_result_sender }).await?;
+//             match db_result_receiver.await?
+//             {
+//                 Ok(Some(doc)) => 
+//                 {
+//                     // document already exists in DB, skip
+//                     info!("Document {} already exists in DB, skipping", doc.eo_number);
+//                 }
+//                 Ok(None) => 
+//                 {
+//                     // document not in DB, process it
+//                     info!("Processing new document {}", card.eo_number);
+//                     let mut texts = String::new();
+//                     for page in 1..=card.pages_count
+//                     {
+//                         let png = publication_service.get_png(&card.id, page).await?;
+//                         let image = recognition::bytes_to_base64url(&png);
+//                         let text = ai_service.recognize_image(&image, "Распознай весь текст с этого изображения. Запиши его в markdown формате, используй заголовки списки и таблицы, вместо '\n' используй кодировку юникода U+000A, без комментариев, закончи, когда текст на изображении кончится", Some(0.0)).await.unwrap();
+//                         texts.push_str(&text);
+//                         info!("Fetched PNG for document {} page {}: {} bytes", card.id, page, png.len());
+//                     }
+//                     let command = format!("Составь краткое содержание этого документа в 2-6 предложениях, начинай в подобном формате (например если федеральный закон): \"Федеральный закон № 133-ФЗ от 25 мая 2026 года... и дальше содержание документа\", не дополняй кем подписан документ и где, так же не уточняй кем принят или одобрен, нужно только краткое содержание текста. Делай на основе следующего текста: {}", texts);
+//                     let message = MessageWithContent
+//                     {
+//                         role: "user".to_owned(),
+//                         content: vec![serde_json::json!({
+//                             "type": "text",
+//                             "text": command
+//                         })]
+//                     };
+//                     let summarization = ai_service.chat(vec![message], Some(0.0)).await.unwrap();
+//                     let (db_result_sender, db_result_receiver) = oneshot::channel();
+//                     db_sender.send(DbCommand::InsertDocument 
+//                     { 
+//                         doc_id: card.id.clone(),
+//                         publication_date: card.publish_date_short,
+//                         eo_number: card.eo_number,
+//                         complex_name: card.complex_name,
+//                         summary: Some(summarization),
+//                         respond: db_result_sender,
+//                         pages_count: card.pages_count as i32
+//                     }).await?;
+//                     match db_result_receiver.await?
+//                     {
+//                         Ok(_) => info!("Document {} saved to DB", card.id),
+//                         Err(e) => error!("Failed to save document {} to DB: {}", card.id, e),
+//                     }
+//                 }
+//                 Err(e) => 
+//                 {
+//                     error!("Failed to query DB for document {}: {}", card.eo_number, e);
+//                 }
+//             }
             
-        }
-        ShedulerNew::start(Duration::from_mins(config.check_period_min as u64)).await?;    
-    }
-}
+//         }
+//         ShedulerNew::start(Duration::from_mins(config.check_period_min as u64)).await?;    
+//     }
+// }
 
 
 mod tests
@@ -422,7 +422,7 @@ use utilites::Date;
     async fn test_recognition()
     {
         crate::logger::init();
-        let mock_client = ReqwestPublicationApiClient::new();
+        let mock_client = ReqwestPublicationApiClient::default();
         let config = ArcSwap::new(Arc::new(CoreConfiguration::default()));
         let service = PublicationService::new(mock_client, config.load().clone());
         let date = Date::parse("24-06-2026").unwrap();

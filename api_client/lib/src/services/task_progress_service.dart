@@ -16,25 +16,25 @@ class TaskProgressService
   {
     _docsSub = ServiceDocumentsProgress.rustSignalStream.listen((pack) => _onDocumentProgressResponse(pack));
     _pagesSub = ServicePagesProgress.rustSignalStream.listen((pack) => _onPageProgressResponse(pack));
-   Future.delayed(Duration(seconds: 5), () =>
-   {
-      pagesProvider.changeState(73, 12),
-      docsProvider.changeState(12, 4)
-   });
-   Future.delayed(Duration(seconds: 15), () =>
-   {
-      pagesProvider.changeState(73, 59),
-      docsProvider.changeState(12, 8)
-   });
-   Future.delayed(Duration(seconds: 25), () =>
-   {
-      pagesProvider.changeState(73, 73),
-      docsProvider.changeState(12, 12)
-   });
-   Future.delayed(Duration(seconds: 30), () =>
-   {
-      checkClean()
-   });
+  //  Future.delayed(Duration(seconds: 5), () =>
+  //  {
+  //     pagesProvider.changeState(73, 12),
+  //     docsProvider.changeState(12, 4)
+  //  });
+  //  Future.delayed(Duration(seconds: 15), () =>
+  //  {
+  //     pagesProvider.changeState(73, 59),
+  //     docsProvider.changeState(12, 8)
+  //  });
+  //  Future.delayed(Duration(seconds: 25), () =>
+  //  {
+  //     pagesProvider.changeState(73, 73),
+  //     docsProvider.changeState(12, 12)
+  //  });
+  //  Future.delayed(Duration(seconds: 30), () =>
+  //  {
+  //     checkClean()
+  //  });
   }
 
   void _onPageProgressResponse(RustSignalPack<ServicePagesProgress> pack) 

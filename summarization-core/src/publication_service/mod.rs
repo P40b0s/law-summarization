@@ -23,7 +23,7 @@ impl<T: PublicationApiClient> PublicationService<T>
     }
     pub fn create_reqwest_service(configuration: Arc<CoreConfiguration>) -> PublicationService<ReqwestPublicationApiClient> 
     {
-        let client = ReqwestPublicationApiClient::new();
+        let client = ReqwestPublicationApiClient::new(configuration.publication_api_url.clone(), configuration.publication_base_url.clone());
         PublicationService::new(client, configuration)
     }
 
@@ -68,7 +68,7 @@ use tracing::info;
     async fn test_fetch_document() 
     {
         crate::logger::init();
-        let mock_client = ReqwestPublicationApiClient::new();
+        let mock_client = ReqwestPublicationApiClient::default();
         let config = ArcSwap::new(Arc::new(CoreConfiguration::default()));
         let service = PublicationService::new(mock_client, config.load().clone());
         let date = Date::parse("22-05-2026").unwrap();
@@ -80,7 +80,7 @@ use tracing::info;
     async fn test_get_png() 
     {
         crate::logger::init();
-        let mock_client = ReqwestPublicationApiClient::new();
+        let mock_client = ReqwestPublicationApiClient::default();
         let config = ArcSwap::new(Arc::new(CoreConfiguration::default()));
         let service = PublicationService::new(mock_client, config.load().clone());
         let date = Date::parse("22-05-2026").unwrap();

@@ -16,6 +16,10 @@ pub struct CoreConfiguration
     pub check_period_min: usize,
     #[serde(default = "retro_days_period")]
     pub retro_days_period: usize,
+    #[serde(default = "publication_api_url")]
+    pub publication_api_url: String,
+    #[serde(default = "publication_base_url")]
+    pub publication_base_url: String,
 }
 
 pub fn document_types() -> Vec<String>
@@ -63,6 +67,15 @@ pub fn ai_service_url() -> String
     "http://10.0.0.2:8080".to_string()
 }
 
+pub fn publication_api_url() -> String
+{
+    "http://publication.pravo.gov.ru/api/".to_owned()
+}
+pub fn publication_base_url() -> String
+{
+    "http://publication.pravo.gov.ru/".to_owned()
+}
+
 
 impl Default for CoreConfiguration
 {
@@ -74,7 +87,9 @@ impl Default for CoreConfiguration
             document_types: document_types(),
             document_signatories: document_signatories(),
             check_period_min: check_period_min(),
-            retro_days_period: retro_days_period()
+            retro_days_period: retro_days_period(),
+            publication_api_url: publication_api_url(),
+            publication_base_url: publication_base_url()
         }
     }
 }
