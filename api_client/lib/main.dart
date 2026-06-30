@@ -1,3 +1,5 @@
+import 'dart:io' as AppExitResponse;
+
 import 'package:api_client/src/controls/document_widget.dart';
 import 'package:api_client/src/controls/health_status.dart';
 import 'package:api_client/src/controls/image_viewer.dart';
@@ -6,7 +8,6 @@ import 'package:api_client/src/controls/task_progress.dart';
 import 'package:api_client/src/controls/toast.dart';
 import 'package:api_client/src/events/documents_events.dart';
 import 'package:api_client/src/providers/error_provider.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:api_client/src/services.dart';
 import 'package:api_client/src/themes.dart';
@@ -17,15 +18,23 @@ import 'package:flutter/material.dart';
 
 Future<void> main() async 
 {
+  WidgetsFlutterBinding.ensureInitialized();
   AppServices.init();
   await initializeRust(assignRustSignal);
+  AppLifecycleListener(
+    onExitRequested: () async 
+    {
+      finalizeRust(); // Завершаем асинхронный рантайм Rust.
+      debugPrint("Рантайм rust успешно выгружен");
+      return AppExitResponse.exit(0); 
+    },
+  );
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget 
 {
   const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) 
   {
@@ -110,6 +119,5 @@ class MyApp extends StatelessWidget
       }
     )
     );
-    
   }
 }
