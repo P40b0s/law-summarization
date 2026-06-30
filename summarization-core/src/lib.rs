@@ -85,7 +85,11 @@ impl SummarizationService
         interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
         loop 
         {
-            let _ = self.events_stream.send(SseMessage::Health);
+            let status = self.ai_service.status().await;
+            if let Ok(s) = status
+            {
+                let _ = self.events_stream.send(SseMessage::Health {busy: s.is_processing});
+            }
             interval.tick().await;
         }
     }

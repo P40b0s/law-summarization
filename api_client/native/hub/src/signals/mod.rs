@@ -195,6 +195,7 @@ pub struct ServicePagesProgress
 pub struct ServiceHealth
 {
     pub alive: bool,
+    pub busy: bool
 }
 
 

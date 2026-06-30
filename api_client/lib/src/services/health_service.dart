@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:api_client/src/bindings/signals/signals.dart';
-import 'package:api_client/src/providers/calendar_provider.dart';
 import 'package:api_client/src/providers/health_provider.dart';
 import 'package:api_client/src/services.dart';
 import 'package:rinf/rinf.dart';
@@ -18,7 +17,7 @@ class HealthService
 
   void _onResponse(RustSignalPack<ServiceHealth> pack) 
   {
-    provider.changeState(pack.message.alive);
+    provider.changeState(pack.message.alive, pack.message.busy);
   }
   
   Future<void> dispose() async 

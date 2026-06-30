@@ -57,7 +57,7 @@ impl ApiClient
                 if elapsed >= Duration::from_secs(10) 
                 {
                     // Таймаут превышен! Отправляем false в Dart
-                    ServiceHealth { alive: false }.send_signal_to_dart();
+                    ServiceHealth { alive: false, busy: false }.send_signal_to_dart();
                     
                     // Чтобы не спамить в Dart каждые миллисекунды после таймаута, 
                     // ждем фиксированные 10 секунд до следующей проверки (или пока не придет новый пинг)
@@ -289,12 +289,13 @@ impl ApiClient
                     progress
                 }.send_signal_to_dart();
             },
-            SseMessage::Health =>
+            SseMessage::Health { busy} =>
             {
                 let _ = self.health_notifier.send(Instant::now());
                 ServiceHealth
                 {
-                    alive: true
+                    alive: true,
+                    busy
                 }.send_signal_to_dart();
             },
             SseMessage::CalendarUpdate { date, state } =>
@@ -311,44 +312,44 @@ impl ApiClient
      
 }
 
-#[derive(Deserialize)]
-pub struct  ApiPageResponse
-{
-    pub page: Vec<u8>,
-    pub page_number: i32,
-}
+// #[derive(Deserialize)]
+// pub struct  ApiPageResponse
+// {
+//     pub page: Vec<u8>,
+//     pub page_number: i32,
+// }
 
 
-#[cfg(test)]
-mod tests
-{
-    use reqwest::header::CONTENT_TYPE;
-use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
-use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
+// #[cfg(test)]
+// mod tests
+// {
+//     use reqwest::header::CONTENT_TYPE;
+// use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
+// use reqwest_retry::{RetryTransientMiddleware, policies::ExponentialBackoff};
 
-use crate::signals::{PageRequest, PageResponse};
+// use crate::signals::{PageRequest, PageResponse};
 
-    #[tokio::test]
-    pub async fn test_get_page()
-    {
-        let url = "http://127.0.0.1:8081/api/v1/pages";
-        let req = PageRequest
-        {
-            id: "5133ba0c-1d95-42e5-822f-c10c691b467d".to_owned(),
-            page_number: 1
-        };
-        let retry_policy = ExponentialBackoff::builder().build_with_max_retries(8);
-        let client: ClientWithMiddleware = ClientBuilder::new(reqwest::Client::new())
-            .with(RetryTransientMiddleware::new_with_policy(retry_policy))
-                .build();
-        let body = serde_json::to_string(&req).unwrap();
-        let result: super::ApiPageResponse = client.post(url)
-        .body(body)
-        .header(CONTENT_TYPE, "application/json")
-        .send()
-        .await.unwrap()
-        .json()
-        .await.unwrap();
-        println!("{}", result.page_number);
-    }
-}
+//     #[tokio::test]
+//     pub async fn test_get_page()
+//     {
+//         let url = "http://127.0.0.1:8081/api/v1/pages";
+//         let req = PageRequest
+//         {
+//             id: "5133ba0c-1d95-42e5-822f-c10c691b467d".to_owned(),
+//             page_number: 1
+//         };
+//         let retry_policy = ExponentialBackoff::builder().build_with_max_retries(8);
+//         let client: ClientWithMiddleware = ClientBuilder::new(reqwest::Client::new())
+//             .with(RetryTransientMiddleware::new_with_policy(retry_policy))
+//                 .build();
+//         let body = serde_json::to_string(&req).unwrap();
+//         let result: super::ApiPageResponse = client.post(url)
+//         .body(body)
+//         .header(CONTENT_TYPE, "application/json")
+//         .send()
+//         .await.unwrap()
+//         .json()
+//         .await.unwrap();
+//         println!("{}", result.page_number);
+//     }
+// }

@@ -79,7 +79,10 @@ pub enum SseMessage
         count: i32,
         progress: i32
     },
-    Health,
+    Health
+    {
+        busy: bool
+    },
     CalendarUpdate
     {
         date: String,

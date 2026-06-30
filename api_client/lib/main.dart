@@ -2,10 +2,12 @@ import 'package:api_client/src/controls/document_widget.dart';
 import 'package:api_client/src/controls/health_status.dart';
 import 'package:api_client/src/controls/image_viewer.dart';
 import 'package:api_client/src/controls/left_panel.dart';
+import 'package:api_client/src/controls/task_progress.dart';
 import 'package:api_client/src/controls/toast.dart';
 import 'package:api_client/src/events/documents_events.dart';
 import 'package:api_client/src/providers/error_provider.dart';
-import 'package:api_client/src/providers/health_provider.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:api_client/src/services.dart';
 import 'package:api_client/src/themes.dart';
 import 'package:provider/provider.dart';
@@ -38,10 +40,23 @@ class MyApp extends StatelessWidget
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: currentMode,
+      locale: const Locale('ru', 'RU'),
+      
+      // Поддерживаемые языки
+      supportedLocales: const [
+        Locale('en', 'US'),
+        Locale('ru', 'RU'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       builder: (context, child) => ToastOverlay(child: child!),
       home: Scaffold(
         appBar: AppBar(title: const Text('Проверка документов сервиса суммаризации'), shape: Border.all( color: Colors.black, width: 2.0),
         actions: [
+                    TaskProgressStatus(),
                     HealthStatus(),
                     IconButton(
                       icon: Icon(currentMode.isDark ? Icons.wb_sunny : Icons.nightlight_round),
@@ -60,7 +75,7 @@ class MyApp extends StatelessWidget
                           label: Text('${errorProvider.count}'),
                           child: const Icon(Icons.history),
                         ),
-                        tooltip: 'Recent errors',
+                        tooltip: 'Ошибки',
                         onPressed: () => RecentErrorsPanel.show(context),
                       ),
               ),

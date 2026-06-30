@@ -3,6 +3,7 @@ use std::sync::Arc;
 use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
 use reqwest::Client;
+use tracing::error;
 
 use crate::configuration::CoreConfiguration;
 
@@ -208,6 +209,33 @@ impl AiService {
 
         Ok(content)
     }
+
+     /// Проверка статуса
+    pub async fn status(
+        &self,
+    ) -> Result<SlotsStatus> {
+
+        let url = format!("{}/slots", self.configuration.ai_service_url);
+        let mut response: Vec<SlotsStatus> = self.client
+            .get(&url)
+            .send()
+            .await?
+            .json()
+            .await
+            .inspect_err(|e| error!("Ошибка запроса статуса llama! {}", e))
+            .context("Failed to send request to AI API")?;
+        response.pop().ok_or(anyhow!("Ошибка, массив статусов не заполнен"))
+    }
+}
+
+
+#[derive(Debug, Deserialize)]
+pub struct SlotsStatus
+{
+    pub id: i32,
+    pub n_ctx: i32,
+    pub speculative: bool,
+    pub is_processing: bool
 }
 
 #[cfg(test)]

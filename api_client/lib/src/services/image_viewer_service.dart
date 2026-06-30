@@ -39,8 +39,15 @@ class ImageViewerService
 
   void requestPage(int pageNum)
   {
-    provider.requestPageState(pageNum);
-    PageRequest(id: provider.docId, pageNumber: pageNum).sendSignalToRust();
+    if(provider.pageExistsInCache(pageNum))
+    {
+      provider.changePageFromCache(pageNum);
+    }
+    else
+    {
+      provider.requestPageState(pageNum);
+      PageRequest(id: provider.docId, pageNumber: pageNum).sendSignalToRust();
+    }
   }
 
   void nextPage() 
@@ -71,6 +78,7 @@ class ImageViewerService
   {
     await _sub.cancel();
     _documentSelectedEventSub.cancel();
+    _dateSelectedEventSub.cancel();
     provider.dispose();
   }
 }

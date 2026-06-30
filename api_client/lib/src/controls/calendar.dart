@@ -157,9 +157,9 @@ class CalendarDayWidget extends StatelessWidget
                     child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text((checked ?? 0).toString(), style: const TextStyle(fontSize: 14)),
+                      Text((checked ?? 0).toString(), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800,)),
                       const Text("/", style: TextStyle(fontSize: 14)),
-                      Text((count ?? 0).toString(), style: const TextStyle(fontSize: 14)),
+                      Text((count ?? 0).toString(), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800,)),
                     ],
                   )
                 )

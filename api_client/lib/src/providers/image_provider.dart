@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
@@ -15,6 +16,7 @@ class ImageProvider extends ChangeNotifier
   bool get isPageLoading => _isPageLoading;
   Uint8List? get currentImage => _currentImage;
   Key get imageKey => _imageKey;
+  HashMap<int, Uint8List> _pages = HashMap();
   ImageProvider();
   void _genKey(int pageNumber)
   {
@@ -25,6 +27,7 @@ class ImageProvider extends ChangeNotifier
     _docId = docId;
     _currentPage = initialPage;
     _maxPage = maxPage;
+    _pages = HashMap();
     requestPageState(initialPage);
   }
   void noDocument()
@@ -33,6 +36,18 @@ class ImageProvider extends ChangeNotifier
     _currentPage = 0;
     _maxPage = 0;
     _currentImage = null;
+    _pages = HashMap();
+    notifyListeners();
+  }
+  bool pageExistsInCache(int page)
+  {
+    return _pages.containsKey(page);
+  }
+  void changePageFromCache(int page)
+  {
+    _currentImage = _pages[page];
+    _currentPage = page;
+    _genKey(page);
     notifyListeners();
   }
   ///оповещение о изменении страницы
@@ -41,6 +56,7 @@ class ImageProvider extends ChangeNotifier
     _currentImage = data;
     _isPageLoading = false;
     _currentPage = page;
+    _pages[page] = data;
     _genKey(page);
     notifyListeners();
   }

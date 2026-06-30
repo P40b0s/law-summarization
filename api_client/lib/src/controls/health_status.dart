@@ -17,15 +17,26 @@ class HealthStatus extends StatelessWidget
         {
           return Tooltip(
             message: "Проверка сервера в процессе...",
-            child: Icon(Icons.signal_wifi_4_bar ,color: Colors.white60,)
+            child: Icon(Icons.hourglass_empty ,color: Colors.white70,)
             );
         }
         else if(context.appServices.healthService.provider.alive)
         {
-          return Tooltip(
-            message: "Сервер доступен на ${context.appServices.healthService.provider.formattedDate}",
-            child: Icon(Icons.signal_wifi_4_bar ,color: Colors.lightGreen,)
-            );
+          if(context.appServices.healthService.provider.isBusy)
+          {
+            return Tooltip(
+                    message: "Сервер в процессе обработки: ${context.appServices.healthService.provider.formattedDate}",
+                    child: Icon(Icons.hourglass_empty ,color: const Color.fromARGB(255, 240, 216, 83),)
+                    );
+          }
+          else
+          {
+            return Tooltip(
+                    message: "Сервер доступен на ${context.appServices.healthService.provider.formattedDate}",
+                    child: Icon(Icons.signal_wifi_4_bar ,color: Colors.lightGreen,)
+                    );
+          }
+          
         }
         else
         {
